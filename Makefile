@@ -26,7 +26,7 @@ BUILD_DIR ?= $(NOW_DIR)/build
 SOURCE_DIR = $(NOW_DIR)/source
 
 # Generation rules. Mostly copied from the document.
-$(BUILD_DIR)/lexer.lex.cpp: $(SOURCE_DIR)/lexer.l
+$(BUILD_DIR)/scanner.cpp: $(SOURCE_DIR)/scanner.l
 	mkdir -p $(dir $@)
 	$(LEX) -o $@ $<
 
