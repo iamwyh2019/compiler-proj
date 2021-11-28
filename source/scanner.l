@@ -16,8 +16,16 @@ octnumber 0{octdigit}*
 hexnumber (0x|0X){hexdigit}+
 
 %%
-{identifier} {return IDENT;}
 [\n\t\r]    {}
+if      {return IF;}
+else    {return ELSE;}
+continue  {return CONTINUE;}
+break   {return BREAK;}
+while   {return WHILE;}
+return  {return RETURN;}
+int     {return INT;}
+const   {return CONST;}
+{identifier} {return IDENT;}
 "+"     {return ADD;}
 "-"     {return SUB;}
 "*"     {return MUL;}
@@ -33,14 +41,6 @@ hexnumber (0x|0X){hexdigit}+
 "{"     {return LCURLY;}
 "}"     {return RCURLY;}
 "="     {return ASSIGN;}
-if      {return IF;}
-else    {return ELSE;}
-continue  {return CONTINUE;}
-break   {return BREAK;}
-while   {return WHILE;}
-return  {return RETURN;}
-int     {return INT;}
-const   {return CONST;}
 ";"     {return SEMI;}
 "["     {return LBRAC;}
 "]"     {return RBRAC;}
