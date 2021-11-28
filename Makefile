@@ -21,14 +21,24 @@ YACC = bison
 
 # Directories. Copied from the document.
 NOW_DIR = $(shell pwd)
-TARGET_EXEC = compiler
 BUILD_DIR ?= $(NOW_DIR)/build
 SOURCE_DIR = $(NOW_DIR)/source
+TARGET_EXEC = compiler
+TARGET_DIR = $(BUILD_DIR)/$(TARGET_EXEC)
 
-# Generation rules. Mostly copied from the document.
-$(BUILD_DIR)/scanner.cpp: $(SOURCE_DIR)/scanner.l
+# YACC OUTPUT
+YACC_OUT = $(BUILD_DIR)/parser.tab.h $(BUILD_DIR)/parser.tab.c
+
+# Generation rules
+$(TARGET_DIR): $(BUILD_DIR)/scanner.cpp
+	$(CPP) $(CPPFLAGS) -o $@ $<
+
+$(BUILD_DIR)/scanner.cpp: $(SOURCE_DIR)/scanner.l $(YACC_OUT)
 	mkdir -p $(dir $@)
 	$(LEX) -o $@ $<
+
+$(YACC_OUT): $(SOURCE_DIR)/parser.y
+	$(YACC) -v --defines=$(BUILD_DIR)/parser.tab.h --output=$(BUILD_DIR)/parser.tab.c $<
 
 # Phony file for clean
 .PHONY: clean

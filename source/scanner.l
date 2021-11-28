@@ -1,5 +1,6 @@
 %{
     #include <cstdio>
+    #include "parser.tab.h"
 %}
 %option yylineno
 
@@ -9,7 +10,8 @@ digit [0-9]
 identifier {letter_}({letter_}|{digit})*
 
 %%
-{identifier} {printf("Identifier!");}
+{digit} {printf("A number!"); return NUMBER;}
+{identifier} {printf("Identifier!"); return IDENT;}
 %%
 
 int main() {
