@@ -5,12 +5,17 @@ extern int yylex();
 extern int yyparse();    
 %}
 
-%token NUMBER
 %token ADD SUB MUL DIV
 %token IDENT
+%token LPAREN RPAREN LCURLY RCURLY LBRAC RBRAC
+%token INT CONST VOID
+%token LE LEQ GE GEQ EQ NEQ AND OR
+%token IF ELSE WHILE BREAK CONTINUE RETURN
+%token ASSIGN
+%token SEMI
 
 %%
-identifier: IDENT {printf("Got an identifier!");}
+identifier: IDENT
     ;
 %%
 
