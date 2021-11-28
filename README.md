@@ -7,3 +7,6 @@ Project progress is updated here.
 
 ## Academic Integrity
 I hereby promise to strictly adhere to academic integrity. I will explicitly specify any line of code copied from others' work. All other codes are original work.
+
+## Mirror
+This repo is [mirrored to GitHub](https://github.com/iamwyh2019/compiler-proj) under username iamwyh2019.
