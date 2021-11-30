@@ -10,14 +10,14 @@ Project progress is updated here.
 I hereby promise to strictly adhere to academic integrity. I will explicitly specify any line of code copied from others' works. All other codes are original work.
 
 ## Mirror
-This repo is [mirrored to GitHub](https://github.com/iamwyh2019/compiler-proj). All commits are made under username "yuhengwu" and mirrored to the GitHub repo with username "iamwyh2019".
+This repo is [mirrored in GitHub](https://github.com/iamwyh2019/compiler-proj). All commits are made under username "yuhengwu" and mirrored to the GitHub repo with username "iamwyh2019".
 
 ## Notes
 ### 2021/11/28
-The project runs like this:
+This project runs like this:
 1. `parser.y` implements a CFG. It will find all defined tokens and convert them into an enum type specified in `parser.tab.h`.
 2. `scanner.l` imports this header file, implements a scanner that identifies tokens, and exports the code to `{BUILD_DIR}/scanner.cpp`.
-3. Compile `scanner.cpp` to get a frontend.
+3. Compile `scanner.cpp` and `parser.tab.c` to get a frontend.
 
 Flex compiles regular expressions in sequential order, so remember to put reserved words **before** identifiers.
 
