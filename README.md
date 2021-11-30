@@ -3,7 +3,7 @@ Project progress is updated here.
 
 ## Progress
 - 2021/11/30: Finished lexical analyzer and configured `yylval`.
-- 2021/11/28: Started! Set up Makefile and finished basic scanner.
+- 2021/11/28: Started. Set up Makefile and finished basic scanner.
 - 2021/10/24: Repo created.
 
 ## Academic Integrity
