@@ -22,7 +22,15 @@ extern int yyparse();
 %token NUMBER
 
 %%
-identifier: IDENT {printf("Identifier name %s\n", (char*)($1));}
+CompStart: CompUnit SEMI;
+CompUnit: ident
+    | num
+    | ident CompUnit
+    | num CompUnit
+    ;
+ident: IDENT {printf("Identifier name %s\n", (char*)($1));}
+    ;
+num: NUMBER {printf("Number, value %d\n", *((int*)($1)));}
     ;
 %%
 
@@ -32,7 +40,6 @@ void yyerror(const char *s) {
 }
 
 int main() {
-    printf("> ");
     yyparse();
     return 0;
 }
