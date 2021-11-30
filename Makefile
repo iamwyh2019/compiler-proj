@@ -30,8 +30,8 @@ TARGET_DIR = $(BUILD_DIR)/$(TARGET_EXEC)
 YACC_OUT = $(BUILD_DIR)/parser.tab.h $(BUILD_DIR)/parser.tab.c
 
 # Generation rules
-$(TARGET_DIR): $(BUILD_DIR)/scanner.cpp
-	$(CPP) $(CPPFLAGS) -o $@ $<
+$(TARGET_DIR): $(BUILD_DIR)/scanner.cpp $(BUILD_DIR)/parser.tab.c
+	$(CPP) $(CPPFLAGS) -o $@ $^
 
 $(BUILD_DIR)/scanner.cpp: $(SOURCE_DIR)/scanner.l $(YACC_OUT)
 	mkdir -p $(dir $@)

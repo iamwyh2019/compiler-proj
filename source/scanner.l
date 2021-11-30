@@ -1,6 +1,11 @@
 %{
-    #include <cstdio>
-    #include "parser.tab.h"
+// Inspired by Zhenbang You
+#define YYSTYPE void*
+// Common headers
+#include <cstdio>
+#include <cstring>
+// Token table
+#include "parser.tab.h"
 %}
 %option yylineno
 
@@ -25,7 +30,6 @@ while   {return WHILE;}
 return  {return RETURN;}
 int     {return INT;}
 const   {return CONST;}
-{identifier} {return IDENT;}
 "+"     {return ADD;}
 "-"     {return SUB;}
 "*"     {return MUL;}
@@ -46,14 +50,25 @@ const   {return CONST;}
 "]"     {return RBRAC;}
 "&&"    {return AND;}
 "||"    {return OR;}
+","     {return COMMA;}
+"."     {return PERIOD;}
+"!"     {return NOT;}
+{decnumber}|{octnumber}|{hexnumber} {
+    int *val_ptr = new int;
+    sscanf(yytext, "%i", val_ptr);
+    yylval = val_ptr;
+    return NUMBER;
+}
+{identifier} {
+    char *name = new char[yyleng+1];
+    strncpy(name, yytext, yyleng);
+    yylval = name;
+    return IDENT;
+}
+
 "//".*$ {/* Single line comment */}
 "/*"[^"*"]*(\*+[^"*/"][^"*"]*)*\*+"/"  { /* Multi-line comment. Copied from Zhenbang You */ }
 %%
-
-int main() {
-    yylex();
-    return 0;
-}
 
 int yywrap() {
     return 1;
