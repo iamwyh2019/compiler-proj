@@ -53,6 +53,7 @@ const   {return CONST;}
 ","     {return COMMA;}
 "."     {return PERIOD;}
 "!"     {return NOT;}
+"%"     {return MOD;}
 {decnumber}|{octnumber}|{hexnumber} {
     int *val_ptr = new int;
     sscanf(yytext, "%i", val_ptr);
