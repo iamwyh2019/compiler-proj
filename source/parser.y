@@ -39,12 +39,11 @@ Scope *nowScope = &globalScope;
 CompUnit:   Decl
     | CompUnit Decl;
 Decl:       ConstDecl
-    {
-        auto cid = (IntIdentToken*)$1;
-        cout << "Constant with name " << cid->Name() << " and value " << cid->Val() << endl;
-    }
     ;
-ConstDecl:  CONST INT ConstDef SEMI {$$ = $3;}
+ConstDecl:  CONST INT ConstDefList SEMI
+    ;
+ConstDefList:   ConstDef
+    | ConstDefList COMMA ConstDef
     ;
 ConstDef:   IDENT ASSIGN ConstInitVal
     {
@@ -62,6 +61,8 @@ ConstDef:   IDENT ASSIGN ConstInitVal
         cid->setVal(V($3));
         nowScope->addToken(cid);
         $$ = cid;
+
+        cout << "New constant with name " << name << " and value " << cid->Val() << endl;
     }
 ConstInitVal:   ConstExp {$$ = $1;}
     ;
