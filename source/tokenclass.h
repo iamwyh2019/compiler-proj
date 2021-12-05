@@ -6,26 +6,18 @@
 using std::string;
 
 class Token {
-    int lineno, charno;
 public:
-    Token(int, int);
-    int lineNo() const;
-    int charNo() const;
-};
-
-class NumberToken: public Token {
-    int val;
-public:
-    NumberToken(int, int, int);
-    int Val() const;
+    Token();
 };
 
 class IdentToken: public Token {
     int val;
     string name;
 public:
-    IdentToken(int, int, char*);
+    IdentToken(string&);
     string& Name();
+    int Val();
+    void setVal(int);
 };
 
 #endif

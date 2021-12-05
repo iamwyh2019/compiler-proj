@@ -2,6 +2,9 @@
 //Inspired by Zhenbang You
 #define YYSTYPE void*
 
+// shorthand for taking int value from a void*
+#define V(p) (*((int*)(p)))
+
 // Common headers
 #include <iostream>
 #include <string>
@@ -30,63 +33,74 @@ extern int yyparse();
 %%
 CompUnit:   Decl
     | CompUnit Decl;
-Decl:       ConstDecl;
-ConstDecl:  CONST INT ConstDef SEMI
+Decl:       ConstDecl
+    {
+        auto cid = (IdentToken*)$1;
+        cout << "Constant with name " << cid->Name() << " and value " << cid->Val() << endl;
+    }
+    ;
+ConstDecl:  CONST INT ConstDef SEMI {$$ = $3;}
     ;
 ConstDef:   IDENT ASSIGN ConstInitVal
     {
+        auto cid = new IdentToken(*(string*)$1);
+        cid->setVal(V($3));
+        $$ = cid;
     }
-ConstInitVal:   ConstExp;
+ConstInitVal:   ConstExp {$$ = $1;}
+    ;
 
 Exp:    AddExp;
 Cond:   LOrExp;
-LVal:   IDENT;
-PrimaryExp: LPAREN Exp RPAREN
-    | LVal
-    | NUMBER
+LVal:   IDENT
     {
-        auto number = (NumberToken*)$1;
+        // TODO: Add Symtable
     }
     ;
-UnaryExp:   PrimaryExp
+PrimaryExp: LPAREN Exp RPAREN {$$ = $2;}
+    | LVal {$$ = $1;}
+    | NUMBER { $$ = $1;}
+    ;
+UnaryExp:   PrimaryExp {$$ = $1;}
     | IDENT LPAREN [FuncParams] RPAREN
-    | ADD UnaryExp
-    | SUB UnaryExp
-    | NOT UnaryExp
+    | ADD UnaryExp {$$ = $2;}
+    | SUB UnaryExp {$$ = new int(-V($2));}
+    | NOT UnaryExp {$$ = new int(!V($2));}
     ;
-FuncParams: Exp;
-MulExp:     UnaryExp
-    | MulExp MUL UnaryExp
-    | MulExp DIV UnaryExp
-    | MulExp MOD UnaryExp
+FuncParams: Exp
     ;
-AddExp:     MulExp
-    | AddExp ADD MulExp
-    | AddExp SUB MulExp
+MulExp:     UnaryExp {$$ = $1;}
+    | MulExp MUL UnaryExp {$$ = new int(V($1)*V($3));}
+    | MulExp DIV UnaryExp {$$ = new int(V($1)/V($3));}
+    | MulExp MOD UnaryExp {$$ = new int(V($1)%V($3));}
     ;
-RelExp:     AddExp
-    | RelExp LE AddExp
-    | RelExp GE AddExp
-    | RelExp LEQ AddExp
-    | RelExp GEQ AddExp
+AddExp:     MulExp {$$ = $1;}
+    | AddExp ADD MulExp {$$ = new int(V($1)+V($3));}
+    | AddExp SUB MulExp {$$ = new int(V($1)-V($3));}
     ;
-EqExp:      RelExp
-    | EqExp EQ RelExp
-    | EqExp NEQ RelExp
+RelExp:     AddExp {$$ = $1;}
+    | RelExp LE AddExp {$$ = new bool(V($1)<V($3));}
+    | RelExp GE AddExp {$$ = new bool(V($1)>V($3));}
+    | RelExp LEQ AddExp {$$ = new bool(V($1)<=V($3));}
+    | RelExp GEQ AddExp {$$ = new bool(V($1)>=V($3));}
     ;
-LAndExp:    EqExp
-    | LAndExp AND EqExp
+EqExp:      RelExp {$$ = $1;}
+    | EqExp EQ RelExp {$$ = new bool(V($1)==V($3));}
+    | EqExp NEQ RelExp {$$ = new bool(V($1)!=V($3));}
     ;
-LOrExp:     LAndExp
-    | LOrExp OR LAndExp
+LAndExp:    EqExp {$$ = $1;}
+    | LAndExp AND EqExp {$$ = new bool(V($1)&&V($3));}
     ;
-ConstExp:   AddExp
+LOrExp:     LAndExp {$$ = $1;}
+    | LOrExp OR LAndExp {$$ = new bool(V($1)||V($3));}
+    ;
+ConstExp:   AddExp {$$ = $1;}
     ;
 %%
 
 void yyerror(const char *s) {
     extern int yylineno, charNum;
-    cout << "Error line " << yylineno << "," << charNum << ": " << s << endl;;
+    cout << "Line " << yylineno << "," << charNum << " :" << s << endl;
 }
 
 int main() {

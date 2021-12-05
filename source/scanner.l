@@ -61,25 +61,22 @@ const   {charNum += yyleng; return CONST;}
 "!"     {++charNum; return NOT;}
 "%"     {++charNum; return MOD;}
 {decnumber} {
-    int val = stoi(string(yytext), 0, 10);
-    yylval = new NumberToken(yylineno, charNum, val);
+    yylval = new int(stoi(string(yytext), 0, 10));
     charNum += yyleng;
     return NUMBER;
 }
 {octnumber} {
-    int val = stoi(string(yytext), 0, 8);
-    yylval = new NumberToken(yylineno, charNum, val);
+    yylval = new int(stoi(string(yytext), 0, 8));
     charNum += yyleng;
     return NUMBER;
 }
 {hexnumber} {
-    int val = stoi(string(yytext), 0, 16);
-    yylval = new NumberToken(yylineno, charNum, val);
+    yylval = new int(stoi(string(yytext), 0, 16));
     charNum += yyleng;
     return NUMBER;
 }
 {identifier} {
-    yylval = new IdentToken(yylineno, charNum, yytext);
+    yylval = new string(yytext);
     charNum += yyleng;
     return IDENT;
 }

@@ -1,17 +1,10 @@
 #include "tokenclass.h"
 
-Token::Token(int ln, int cn):
-    lineno(ln), charno(cn) {}
+Token::Token(){}
 
-int Token::lineNo() const {return lineno;}
-int Token::charNo() const {return charno;}
-
-NumberToken::NumberToken(int ln, int cn, int v):
-    Token(ln,cn), val(v) {}
-
-int NumberToken::Val() const {return val;}
-
-IdentToken::IdentToken(int ln, int cn, char *_name):
-    Token(ln, cn), name(_name) {}
+IdentToken::IdentToken(string &_name):
+    name(_name) {val=0;}
 
 string& IdentToken::Name() {return name;}
+int IdentToken::Val() {return val;}
+void IdentToken::setVal(int v) {val = v;}
