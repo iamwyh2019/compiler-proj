@@ -2,8 +2,9 @@
 // Inspired by Zhenbang You
 #define YYSTYPE void*
 // Common headers
-#include <cstdio>
-#include <cstring>
+#include <iostream>
+#include <string>
+using namespace std;
 // Token table
 #include "parser.tab.h"
 %}
@@ -54,16 +55,23 @@ const   {return CONST;}
 "."     {return PERIOD;}
 "!"     {return NOT;}
 "%"     {return MOD;}
-{decnumber}|{octnumber}|{hexnumber} {
-    int *val_ptr = new int;
-    sscanf(yytext, "%i", val_ptr);
-    yylval = val_ptr;
-    return NUMBER;
+{decnumber} {
+    auto val = new int;
+    *val = stoi(string(yytext), 0, 10);
+    yylval = val;
+}
+{octnumber} {
+    auto val = new int;
+    *val = stoi(string(yytext), 0, 8);
+    yylval = val;
+}
+{hexnumber} {
+    auto val = new int;
+    *val = stoi(string(yytext), 0, 16);
+    yylval = val;
 }
 {identifier} {
-    char *name = new char[yyleng+1];
-    strncpy(name, yytext, yyleng);
-    yylval = name;
+    yylval = new string(yytext);
     return IDENT;
 }
 

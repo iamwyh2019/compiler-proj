@@ -3,12 +3,15 @@
 #define YYSTYPE void*
 
 // Common headers
-#include <cstdio>
+#include <iostream>
+#include <string>
+using namespace std;
 
 // flex functions
 void yyerror(const char *);
 extern int yylex();
 extern int yyparse();
+
 %}
 
 %token ADD SUB MUL DIV MOD
@@ -27,7 +30,10 @@ CompUnit:   Decl
 Decl:       ConstDecl;
 ConstDecl:  CONST INT ConstDef SEMI
     ;
-ConstDef:   IDENT ASSIGN ConstInitVal;
+ConstDef:   IDENT ASSIGN ConstInitVal
+    {
+        cout << "Getting a const with name " << (char*)$1 << " and value " << *(int*)$3 << endl;
+    }
 ConstInitVal:   ConstExp;
 
 Exp:    AddExp;
@@ -39,9 +45,10 @@ PrimaryExp: LPAREN Exp RPAREN
     ;
 UnaryExp:   PrimaryExp
     | IDENT LPAREN [FuncParams] RPAREN
-    | UnaryOp UnaryExp
+    | ADD UnaryExp
+    | SUB UnaryExp
+    | NOT UnaryExp
     ;
-UnaryOp:    ADD | SUB | NOT;
 FuncParams: Exp;
 MulExp:     UnaryExp
     | MulExp MUL UnaryExp
@@ -68,15 +75,17 @@ LAndExp:    EqExp
 LOrExp:     LAndExp
     | LOrExp OR LAndExp
     ;
-ConstExp:   AddExp;
+ConstExp:   AddExp
+    ;
 %%
 
 void yyerror(const char *s) {
     extern int yylineno;
-    printf("Error! line %d: %s\n", yylineno, s);
+    cout << "Error! line " << yylineno << ": " << s << endl;;
 }
 
 int main() {
+    ios::sync_with_stdio(false);
     yyparse();
     return 0;
 }
