@@ -61,17 +61,17 @@ const   {charNum += yyleng; return CONST;}
 "!"     {++charNum; return NOT;}
 "%"     {++charNum; return MOD;}
 {decnumber} {
-    yylval = new int(stoi(string(yytext), 0, 10));
+    yylval = new int(strtol(yytext, nullptr, 10));
     charNum += yyleng;
     return NUMBER;
 }
 {octnumber} {
-    yylval = new int(stoi(string(yytext), 0, 8));
+    yylval = new int(strtol(yytext, nullptr, 8));
     charNum += yyleng;
     return NUMBER;
 }
 {hexnumber} {
-    yylval = new int(stoi(string(yytext), 0, 16));
+    yylval = new int(strtol(yytext, nullptr, 16));
     charNum += yyleng;
     return NUMBER;
 }

@@ -58,7 +58,7 @@ ConstDef:   IDENT ASSIGN ConstInitVal
             yyerror(errmsg);
         }
 
-        auto cid = new IntIdentToken(*(string*)$1, true);
+        auto cid = new IntIdentToken(*(string*)$1, true); // const
         cid->setVal(V($3));
         nowScope->addToken(cid);
         $$ = cid;
@@ -72,7 +72,7 @@ LVal:   IDENT
     {
         auto name = *(string*)$1;
         auto cid = (IntIdentToken*)nowScope->findAll(name);
-        
+
         if (cid == nullptr) {
             string errmsg = "\"";
             errmsg += name;
