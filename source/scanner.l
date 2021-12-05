@@ -7,6 +7,10 @@
 using namespace std;
 // Token table
 #include "parser.tab.h"
+// Token class
+#include "tokenclass.h"
+
+int charNum = 1;
 %}
 %option yylineno
 
@@ -22,56 +26,61 @@ octnumber 0{octdigit}*
 hexnumber (0x|0X){hexdigit}+
 
 %%
-[\n\t\r]    {}
-if      {return IF;}
-else    {return ELSE;}
-continue  {return CONTINUE;}
-break   {return BREAK;}
-while   {return WHILE;}
-return  {return RETURN;}
-int     {return INT;}
-const   {return CONST;}
-"+"     {return ADD;}
-"-"     {return SUB;}
-"*"     {return MUL;}
-"/"     {return DIV;}
-"<"     {return LE;}
-"<="    {return LEQ;}
-">"     {return GE;}
-">="    {return GEQ;}
-"=="    {return EQ;}
-"!="    {return NEQ;}
-"("     {return LPAREN;}
-")"     {return RPAREN;}
-"{"     {return LCURLY;}
-"}"     {return RCURLY;}
-"="     {return ASSIGN;}
-";"     {return SEMI;}
-"["     {return LBRAC;}
-"]"     {return RBRAC;}
-"&&"    {return AND;}
-"||"    {return OR;}
-","     {return COMMA;}
-"."     {return PERIOD;}
-"!"     {return NOT;}
-"%"     {return MOD;}
+[\040\t]    {charNum += yyleng;}
+[\n\r]  {charNum = 1;}
+if      {charNum += yyleng; return IF;}
+else    {charNum += yyleng; return ELSE;}
+continue  {charNum += yyleng; return CONT;}
+break   {charNum += yyleng; return BREAK;}
+while   {charNum += yyleng; return WHILE;}
+return  {charNum += yyleng; return RETURN;}
+int     {charNum += yyleng; return INT;}
+const   {charNum += yyleng; return CONST;}
+"+"     {++charNum; return ADD;}
+"-"     {++charNum; return SUB;}
+"*"     {++charNum; return MUL;}
+"/"     {++charNum; return DIV;}
+"<"     {++charNum; return LE;}
+"<="    {charNum += 2; return LEQ;}
+">"     {++charNum; return GE;}
+">="    {charNum += 2; return GEQ;}
+"=="    {charNum += 2; return EQ;}
+"!="    {charNum += 2; return NEQ;}
+"("     {++charNum; return LPAREN;}
+")"     {++charNum; return RPAREN;}
+"{"     {++charNum; return LCURLY;}
+"}"     {++charNum; return RCURLY;}
+"="     {++charNum; return ASSIGN;}
+";"     {++charNum; return SEMI;}
+"["     {++charNum; return LBRAC;}
+"]"     {++charNum; return RBRAC;}
+"&&"    {charNum += 2; return AND;}
+"||"    {charNum += 2; return OR;}
+","     {++charNum; return COMMA;}
+"."     {++charNum; return PERIOD;}
+"!"     {++charNum; return NOT;}
+"%"     {++charNum; return MOD;}
 {decnumber} {
-    auto val = new int;
-    *val = stoi(string(yytext), 0, 10);
-    yylval = val;
+    int val = stoi(string(yytext), 0, 10);
+    yylval = new NumberToken(yylineno, charNum, val);
+    charNum += yyleng;
+    return NUMBER;
 }
 {octnumber} {
-    auto val = new int;
-    *val = stoi(string(yytext), 0, 8);
-    yylval = val;
+    int val = stoi(string(yytext), 0, 8);
+    yylval = new NumberToken(yylineno, charNum, val);
+    charNum += yyleng;
+    return NUMBER;
 }
 {hexnumber} {
-    auto val = new int;
-    *val = stoi(string(yytext), 0, 16);
-    yylval = val;
+    int val = stoi(string(yytext), 0, 16);
+    yylval = new NumberToken(yylineno, charNum, val);
+    charNum += yyleng;
+    return NUMBER;
 }
 {identifier} {
-    yylval = new string(yytext);
+    yylval = new IdentToken(yylineno, charNum, yytext);
+    charNum += yyleng;
     return IDENT;
 }
 

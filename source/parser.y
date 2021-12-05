@@ -7,6 +7,9 @@
 #include <string>
 using namespace std;
 
+// Token class
+#include "tokenclass.h"
+
 // flex functions
 void yyerror(const char *);
 extern int yylex();
@@ -19,7 +22,7 @@ extern int yyparse();
 %token LPAREN RPAREN LCURLY RCURLY LBRAC RBRAC
 %token INT CONST VOID
 %token LE LEQ GE GEQ EQ NEQ AND OR NOT
-%token IF ELSE WHILE BREAK CONTINUE RETURN
+%token IF ELSE WHILE BREAK CONT RETURN
 %token ASSIGN
 %token SEMI COMMA PERIOD
 %token NUMBER
@@ -32,7 +35,6 @@ ConstDecl:  CONST INT ConstDef SEMI
     ;
 ConstDef:   IDENT ASSIGN ConstInitVal
     {
-        cout << "Getting a const with name " << (char*)$1 << " and value " << *(int*)$3 << endl;
     }
 ConstInitVal:   ConstExp;
 
@@ -42,6 +44,9 @@ LVal:   IDENT;
 PrimaryExp: LPAREN Exp RPAREN
     | LVal
     | NUMBER
+    {
+        auto number = (NumberToken*)$1;
+    }
     ;
 UnaryExp:   PrimaryExp
     | IDENT LPAREN [FuncParams] RPAREN
@@ -80,8 +85,8 @@ ConstExp:   AddExp
 %%
 
 void yyerror(const char *s) {
-    extern int yylineno;
-    cout << "Error! line " << yylineno << ": " << s << endl;;
+    extern int yylineno, charNum;
+    cout << "Error line " << yylineno << "," << charNum << ": " << s << endl;;
 }
 
 int main() {
