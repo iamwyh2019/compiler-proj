@@ -8,6 +8,7 @@
 // Common headers
 #include <iostream>
 #include <string>
+#include <cstdlib>
 using namespace std;
 
 // Token class
@@ -15,8 +16,12 @@ using namespace std;
 
 // flex functions
 void yyerror(const char *);
+void yyerror(const string&);
 extern int yylex();
 extern int yyparse();
+
+Scope globalScope;
+Scope *nowScope = &globalScope;
 
 %}
 
@@ -35,7 +40,7 @@ CompUnit:   Decl
     | CompUnit Decl;
 Decl:       ConstDecl
     {
-        auto cid = (IdentToken*)$1;
+        auto cid = (IntIdentToken*)$1;
         cout << "Constant with name " << cid->Name() << " and value " << cid->Val() << endl;
     }
     ;
@@ -43,8 +48,19 @@ ConstDecl:  CONST INT ConstDef SEMI {$$ = $3;}
     ;
 ConstDef:   IDENT ASSIGN ConstInitVal
     {
-        auto cid = new IdentToken(*(string*)$1);
+        auto name = *(string*)$1;
+        auto oldcid = nowScope->findOne(name);
+
+        if (oldcid != nullptr) {
+            string errmsg = "\"";
+            errmsg += name;
+            errmsg += "\" already defined in this scope.";
+            yyerror(errmsg);
+        }
+
+        auto cid = new IntIdentToken(*(string*)$1, true);
         cid->setVal(V($3));
+        nowScope->addToken(cid);
         $$ = cid;
     }
 ConstInitVal:   ConstExp {$$ = $1;}
@@ -54,7 +70,17 @@ Exp:    AddExp;
 Cond:   LOrExp;
 LVal:   IDENT
     {
-        // TODO: Add Symtable
+        auto name = *(string*)$1;
+        auto cid = (IntIdentToken*)nowScope->findAll(name);
+        
+        if (cid == nullptr) {
+            string errmsg = "\"";
+            errmsg += name;
+            errmsg += "\" undefined in this scope.";
+            yyerror(errmsg);
+        }
+
+        $$ = new int(cid->Val());
     }
     ;
 PrimaryExp: LPAREN Exp RPAREN {$$ = $2;}
@@ -100,7 +126,12 @@ ConstExp:   AddExp {$$ = $1;}
 
 void yyerror(const char *s) {
     extern int yylineno, charNum;
-    cout << "Line " << yylineno << "," << charNum << " :" << s << endl;
+    cout << "Line " << yylineno << "," << charNum << ": " << s << endl;
+    exit(1);
+}
+
+void yyerror(const string &s) {
+    yyerror(s.c_str());
 }
 
 int main() {
