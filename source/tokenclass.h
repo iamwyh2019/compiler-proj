@@ -5,9 +5,16 @@
 #include <string>
 using std::string;
 
+enum TokenType {
+    IntType,
+    ArrayType
+};
+
 class Token {
+    TokenType type;
 public:
-    Token();
+    Token(TokenType);
+    TokenType Type() const;
 };
 
 class IdentToken: public Token {

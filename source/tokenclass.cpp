@@ -1,9 +1,12 @@
 #include "tokenclass.h"
 
-Token::Token(){}
+Token::Token(TokenType tp):
+    type(tp) {}
+
+TokenType Token::Type() const {return type;}
 
 IdentToken::IdentToken(string &_name):
-    name(_name) {val=0;}
+    Token(IntType), name(_name) {val=0;}
 
 string& IdentToken::Name() {return name;}
 int IdentToken::Val() {return val;}
