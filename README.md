@@ -10,9 +10,20 @@
 
 ## 学术诚信
 我承诺严格遵守学术诚信。所有来自他人的代码段都会明确标出，其余所有代码都是个人工作。
+- 多行注释的正则表达式来自Zhenbang You。我至今还不会推这个表达式；
+- 将`yylval`定义成`void*`的想法来自Zhenbang You；
 
 ## 镜像
-这个仓库托管于课程GitLab上，并[镜像于GitHub](https://github.com/iamwyh2019/compiler-proj)上。所有commit都来源于用户名"yuhengwu"和邮箱"799810767@qq.com"。
+这个仓库托管于课程GitLab上，并[镜像于GitHub](https://github.com/iamwyh2019/compiler-proj)上用来刷马赛克墙。如果代码跟本仓库有100%查重率还请不要误杀。所有commit的提交用户名均为"yuhengwu"，邮箱均为"799810767@qq.com"。
+
+## 工具类
+`tokenclass.h`和`tokenclass.cpp`中定义了许多工具类用来表达编译中的实体和信息。目前，它包含以下内容：
+- `Token`：代表一切token的父类，成员变量`type`，目前可选`IntType`和`ArrayType`，之后会加上`FuncType`等；
+- `IdentToken`：代表所有标识符，包括常量和变量。成员变量有变量名、对应的Eeyore变量名，是否为常量，是否为临时变量，是否为函数变量等等；
+- `IntIdentToken`：代表整型类标识符，成员变量有变量值；
+- `ArrayIdentToken`：代表数组类标识符，成员变量有维度信息。如果它是常量，则会储存整个数组的值；如果它是变量，只会储存维度信息，由`ArrayOperator`翻译访问语句；
+- `Scope`：作用域，成员变量有一个`map<string, IdentToken*>`储存当前作用域的标识符，有一个指向上层作用域的指针。支持在当前作用域以及所有有效作用域内查找一个标识符，返回对应的类指针；
+- `ArrayOperator`：处理数组操作。目前支持常量数组初始化；
 
 ## 笔记
 ### 2021/11/28
@@ -32,7 +43,7 @@ Flex会按文件内书写的顺序从上到下匹配token，所以要把保留�
     - 常数的值等于它的值；
     - 标识符的值等于它的名字（变量名）；
 
-**One point inspired by Zhenbang You**: `yylval` 的类型默认为`int`，具体由 `YYSTYPE` 决定。为保证最大的灵活性，我们可以将它定义为 `void*` （通用指针），并用 `*yylval` （配上适当的指针类型转换）来访问具体值。具体来说，在scanner和parser里面都加上 `#deefine YYSTYPE void*` 就好。[一个参考链接](https://www.coder4.com/archives/3975).
+**灵感来自 Zhenbang You**: `yylval` 的类型默认为`int`，具体由 `YYSTYPE` 决定。为保证最大的灵活性，我们可以将它定义为 `void*` （通用指针），并用 `*yylval` （配上适当的指针类型转换）来访问具体值。具体来说，在scanner和parser里面都加上 `#deefine YYSTYPE void*` 就好。[一个参考链接](https://www.coder4.com/archives/3975).
 
 在Bison中，我们用"$+数字"来访问匹配到的token的值。具体来说，如果有一个规则类似 `UNIT: EXP1 EXP2 EXP3`，那么右侧三个token的值分别为 $1 $2 $3。这个表达式的值（也就是`UNIT`的值）为 $$。注意在本项目中它们都是 `void*` 类型。
 
