@@ -77,6 +77,8 @@ void ArrayIdentToken::setShape(vector<int> &_shape) {
     for (int i = dim-2; i >= 0; --i)
         shape[i] *= shape[i+1];
     shape.push_back(1);
+    // If it is a constant, store the values. Otherwise just store its shape
+    if (is_c) vals = vector<int>(shape[0], 0);
 }
 
 const int ArrayIdentToken::size() const {
@@ -121,8 +123,4 @@ void Scope::addToken(IdentToken *tok) {
 }
 
 
-// ============= Initializer =============
-void Initializer::setTarget(ArrayIdentToken *tgt) {
-    target = tgt;
-    layer = 0;
-}
+// ============= ArrayOperator =============

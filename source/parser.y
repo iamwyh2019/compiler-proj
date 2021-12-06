@@ -139,12 +139,12 @@ VarDef: IDENT
 
         IntIdentToken *cid;
 
-        if (!initRes->isTmp()) {
+        if (!initRes->isTmp()) { // It's either a constant or a declared variable, need to declare a new one
             cid = new IntIdentToken(name, false); // not const
             out << cid->Declare() << endl;
             out << cid->getName() << "=" << initRes->getName() << endl;
         }
-        else {
+        else { // It's a temporary variable, just use it
             cid = initRes;
             cid->setName(name);
             cid->setTmp(false);

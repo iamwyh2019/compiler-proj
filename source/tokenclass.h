@@ -76,6 +76,7 @@ public:
 // dim: dimension
 class ArrayIdentToken: public IdentToken {
     vector<int> shape;
+    vector<int> vals;
     int dim;
 public:
     ArrayIdentToken(const string&, bool, bool=false, bool=false);
@@ -103,8 +104,8 @@ public:
 };
 
 
-// Initializer, used to initialize arrays
-class Initializer {
+// ArrayOperator, used to manipulate arrays
+class ArrayOperator {
     ArrayIdentToken *target;
     int layer;
 public:
