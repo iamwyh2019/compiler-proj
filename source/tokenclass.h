@@ -6,6 +6,7 @@
 #include <map>
 #include <vector>
 using std::string;
+using std::to_string;
 using std::map;
 using std::vector;
 
@@ -13,6 +14,8 @@ enum TokenType {
     IntType,
     ArrayType,
 };
+
+
 
 // The general token class
 // Type: token type
@@ -42,13 +45,17 @@ public:
 // Name: name of the identifier
 // TokenType: either int or array
 // is_const: whether it is a constant
+// is_param: is this a parameter or a global variable
 class IdentToken: public Token {
-    bool is_c;
-    string name;
+    bool is_c, is_p;
+    string name, num_text;
+    static int count;
+    int num;
 public:
-    IdentToken(string&, bool, TokenType);
+    IdentToken(string&, TokenType, bool=false, bool=false);
     bool isConst() const;
     string& Name();
+    string getName();
 };
 
 // IntIdentToken, has TokenType int
@@ -67,7 +74,6 @@ public:
 // dim: dimension
 class ArrayIdentToken: public IdentToken {
     vector<int> shape;
-    vector<int> vals;
     int dim;
 public:
     ArrayIdentToken(string&, bool);

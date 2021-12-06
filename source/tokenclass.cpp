@@ -14,21 +14,32 @@ bool IntToken::isConst() const {return is_c;}
 bool IntToken::operator&(const IntToken &b) const {return is_c && b.is_c;}
 
 // ============= IdentToken =============
-IdentToken::IdentToken(string &_name, bool is_const, TokenType tp):
-    Token(tp) {name = _name; is_c = is_const;}
+int IdentToken::count = 0;
+IdentToken::IdentToken(string &_name, TokenType tp, bool is_const, bool is_param):
+    Token(tp) {
+        name = _name;
+        is_c = is_const;
+        is_p = is_param;
+        num = count++;
+        num_text = to_string(num);
+    }
 string& IdentToken::Name() {return name;}
 bool IdentToken::isConst() const {return is_c;}
+string IdentToken::getName(){
+    if (is_p) return "p" + num_text;
+    else return "T" + num_text;
+}
 
 // ============= IntIdentToken =============
 IntIdentToken::IntIdentToken(string &_name, bool is_const):
-    IdentToken(_name, is_const, IntType) {val = 0;}
+    IdentToken(_name, IntType, is_const) {val = 0;}
 
 int IntIdentToken::Val() const {return val;}
 void IntIdentToken::setVal(int v) {val = v;}
 
 // ============= ArrayIdentToken =============
 ArrayIdentToken::ArrayIdentToken(string &_name, bool is_const):
-    IdentToken(_name, is_const, ArrayType) {
+    IdentToken(_name, ArrayType, is_const) {
         dim = 0;
         shape = vector<int>(1,0);
     }
@@ -38,7 +49,6 @@ void ArrayIdentToken::setShape(vector<int> &_shape) {
     dim = shape.size();
     for (int i = dim-2; i >= 0; --i)
         shape[i] *= shape[i+1];
-    vals = vector<int>(shape[0], 0); // All initialized as zero
     shape.push_back(1);
 }
 
