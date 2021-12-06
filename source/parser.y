@@ -108,7 +108,7 @@ ConstArrayVal:  ConstExp
     ConstArrayVals RCURLY
     {
         if (!arrOp.moveUp())
-            yyerror("Unknown error in }");
+            yyerror("Unknown error in \"}\"");
     }
     ;
 
@@ -214,9 +214,9 @@ UnaryExp:   PrimaryExp {$$ = $1;}
         if (cid->isConst())
             $$ = new IntIdentToken(-cid->Val());
         else {
-            auto newcid = new IntIdentToken(-cid->Val(), false, true);
+            auto newcid = new IntIdentToken();
             out << newcid->Declare() << endl;
-            out << newcid->getName() << "=-" << cid->getName() << endl;
+            out << newcid->getName() << " = -" << cid->getName() << endl;
             $$ = newcid;
         }
     }
@@ -226,9 +226,9 @@ UnaryExp:   PrimaryExp {$$ = $1;}
         if (cid->isConst())
             $$ = new IntIdentToken(!cid->Val());
         else {
-            auto newcid = new IntIdentToken(!cid->Val(), false, true);
+            auto newcid = new IntIdentToken(); // A temporary var
             out << newcid->Declare() << endl;
-            out << newcid->getName() << "=!" << cid->getName() << endl;
+            out << newcid->getName() << " = !" << cid->getName() << endl;
             $$ = newcid;
         }
     }
@@ -243,9 +243,9 @@ MulExp:     UnaryExp {$$ = $1;}
             $$ = new IntIdentToken(c1->Val() * c2->Val());
         }
         else {
-            auto newcid = new IntIdentToken(c1->Val() * c2->Val(), false, true); // A tmp var
+            auto newcid = new IntIdentToken(); // A tmp var
             out << newcid->Declare() << endl;
-            out << newcid->getName() << "=" << c1->getName() << "*" << c2->getName() << endl;
+            out << newcid->getName() << " = " << c1->getName() << " * " << c2->getName() << endl;
             $$ = newcid;
         }
     }
@@ -253,12 +253,14 @@ MulExp:     UnaryExp {$$ = $1;}
     {
         auto c1 = (IntIdentToken*)$1, c2 = (IntIdentToken*)$3;
         if (*c1&&*c2) {
+            if (c2->Val() == 0)
+                yyerror("devided by zero!");
             $$ = new IntIdentToken(c1->Val() / c2->Val());
         }
         else {
-            auto newcid = new IntIdentToken(c1->Val() / c2->Val(), false, true); // A tmp var
+            auto newcid = new IntIdentToken(); // A tmp var
             out << newcid->Declare() << endl;
-            out << newcid->getName() << "=" << c1->getName() << "/" << c2->getName() << endl;
+            out << newcid->getName() << " = " << c1->getName() << " / " << c2->getName() << endl;
             $$ = newcid;
         }
     }
@@ -266,12 +268,14 @@ MulExp:     UnaryExp {$$ = $1;}
     {
         auto c1 = (IntIdentToken*)$1, c2 = (IntIdentToken*)$3;
         if (*c1&&*c2) {
+            if (c2->Val() == 0)
+                yyerror("devided by zero!");
             $$ = new IntIdentToken(c1->Val() % c2->Val());
         }
         else {
-            auto newcid = new IntIdentToken(c1->Val() % c2->Val(), false, true);
+            auto newcid = new IntIdentToken();
             out << newcid->Declare() << endl;
-            out << newcid->getName() << "=" << c1->getName() << "%" << c2->getName() << endl;
+            out << newcid->getName() << " = " << c1->getName() << " % " << c2->getName() << endl;
             $$ = newcid;
         }
     }
@@ -284,9 +288,9 @@ AddExp:     MulExp {$$ = $1;}
             $$ = new IntIdentToken(c1->Val() + c2->Val());
         }
         else {
-            auto newcid = new IntIdentToken(c1->Val() + c2->Val(), false, true);
+            auto newcid = new IntIdentToken();
             out << newcid->Declare() << endl;
-            out << newcid->getName() << "=" << c1->getName() << "+" << c2->getName() << endl;
+            out << newcid->getName() << " = " << c1->getName() << " + " << c2->getName() << endl;
             $$ = newcid;
         }
     }
@@ -297,9 +301,9 @@ AddExp:     MulExp {$$ = $1;}
             $$ = new IntIdentToken(c1->Val() - c2->Val());
         }
         else {
-            auto newcid = new IntIdentToken(c1->Val() - c2->Val(), false, true);
+            auto newcid = new IntIdentToken();
             out << newcid->Declare() << endl;
-            out << newcid->getName() << "=" << c1->getName() << "-" << c2->getName() << endl;
+            out << newcid->getName() << " = " << c1->getName() << " - " << c2->getName() << endl;
             $$ = newcid;
         }
     }

@@ -52,11 +52,13 @@ IntIdentToken::IntIdentToken(const string &_name, bool is_const, bool is_tmp, bo
         val = 0;
         if (is_c) eeyore_name = to_string(val);
     }
-IntIdentToken::IntIdentToken(int v, bool is_const, bool is_tmp, bool is_param):
-    IdentToken(emptyString, IntType, is_const, is_tmp, is_param) {
+IntIdentToken::IntIdentToken(int v, bool is_tmp, bool is_param):
+    IdentToken(emptyString, IntType, true, is_tmp, is_param) {
         val = v;
         if (is_c) eeyore_name = to_string(val);
     }
+IntIdentToken::IntIdentToken(bool is_tmp, bool is_param):
+    IdentToken(emptyString, IntType, false, is_tmp, is_param) {}
 
 int IntIdentToken::Val() const {return val;}
 void IntIdentToken::setVal(int v) {
