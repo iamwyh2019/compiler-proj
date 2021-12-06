@@ -15,8 +15,6 @@ enum TokenType {
     ArrayType,
 };
 
-
-
 // The general token class
 // Type: token type
 class Token {
@@ -78,6 +76,7 @@ class ArrayIdentToken: public IdentToken {
     vector<int> shape;
     vector<int> vals;
     int dim;
+    friend class ArrayOperator;
 public:
     ArrayIdentToken(const string&, bool, bool=false, bool=false);
     void setShape(vector<int>&);
@@ -107,9 +106,13 @@ public:
 // ArrayOperator, used to manipulate arrays
 class ArrayOperator {
     ArrayIdentToken *target;
-    int layer;
+    int layer, index;
 public:
     void setTarget(ArrayIdentToken*);
+    bool addOne(int); // For constant array
+    bool moveDown();
+    bool moveUp();
+    bool jumpOne();
 };
 
 #endif

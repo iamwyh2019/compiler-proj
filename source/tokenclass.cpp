@@ -124,3 +124,32 @@ void Scope::addToken(IdentToken *tok) {
 
 
 // ============= ArrayOperator =============
+void ArrayOperator::setTarget(ArrayIdentToken *tgt) {
+    target = tgt;
+    layer = 0; index = 0;
+}
+
+bool ArrayOperator::addOne(int v) {
+    if (index >= target->shape[0]) return false;
+    target->vals[index++] = v;
+    return true;
+}
+
+bool ArrayOperator::moveDown() {
+    ++layer;
+    if (layer > target->dim) return false;
+    index = ((index+target->shape[layer]-1) / target->shape[layer]) * target->shape[layer];
+    return true;
+}
+
+bool ArrayOperator::moveUp() {
+    --layer;
+    index = ((index+target->shape[layer]-1) / target->shape[layer]) * target->shape[layer];
+    return true;
+}
+
+bool ArrayOperator::jumpOne() {
+    if (layer >= target->dim) return false;
+    index += target->shape[layer];
+    return true;
+}

@@ -24,6 +24,8 @@ extern int yyparse();
 Scope globalScope;
 Scope *nowScope = &globalScope;
 
+auto arrOp = ArrayOperator();
+
 // Currently print to the screen. Will change to files.
 ostream &out = cout;
 
@@ -79,12 +81,39 @@ ConstDef:   IDENT ASSIGN ConstInitVal
             yyerror(errmsg);
         }
 
-        auto cid = new ArrayIdentToken(*(string*)$1, true); // const
+        auto cid = new ArrayIdentToken(name, true); // const
         cid->setShape(*(vector<int>*)$2);
         nowScope->addToken(cid);
 
-        out << cid->Declare() << endl;
+        arrOp.setTarget(cid);
     }
+    ASSIGN ConstArrayVal
+    ;
+
+ConstArrayVal:  ConstExp
+    {
+        if (!arrOp.addOne(V($1)))
+            yyerror("Array out of bound.");
+    }
+    | LCURLY RCURLY
+    {
+        if (!arrOp.jumpOne())
+            yyerror("Nested list too deep.");
+    }
+    | LCURLY
+    {
+        if (!arrOp.moveDown())
+            yyerror("Nested list too deep.");
+    }
+    ConstArrayVals RCURLY
+    {
+        if (!arrOp.moveUp())
+            yyerror("Unknown error in }");
+    }
+    ;
+
+ConstArrayVals: ConstArrayVals COMMA ConstArrayVal
+    | ConstArrayVal
     ;
 
 ArrayDim:   ArrayDim LBRAC ConstExp RBRAC
