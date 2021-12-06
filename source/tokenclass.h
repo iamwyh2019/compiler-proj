@@ -10,6 +10,8 @@ using std::to_string;
 using std::map;
 using std::vector;
 
+const int INTSIZE = 4;
+
 enum TokenType {
     IntType,
     ArrayType,
@@ -31,12 +33,12 @@ public:
 // is_param: is this a parameter or a global variable
 class IdentToken: public Token {
 protected:
-    bool is_c, is_p, is_t;
+    bool is_c, is_p, is_t, s_assign;
     string name, eeyore_name;
     static int count;
     int num;
 public:
-    IdentToken(const string&, TokenType, bool=false, bool=false, bool=false);
+    IdentToken(const string&, TokenType, bool, bool=false, bool=false, bool=false);
     virtual ~IdentToken()=0;
 
     bool isConst() const;
@@ -110,10 +112,14 @@ class ArrayOperator {
     int layer, index;
 public:
     void setTarget(ArrayIdentToken*);
-    bool addOne(int); // For constant array
-    bool moveDown();
-    bool moveUp();
-    bool jumpOne();
+    bool addOne(int); // For constant array, add one element to values;
+    bool moveDown(); // Meet {
+    bool moveUp(); // Meet }
+    bool jumpOne(); // Meet {}
+    int size();
+    string& name(); // Could modify. Danger!
+
+    int operator[](int);
 };
 
 #endif

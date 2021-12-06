@@ -1,8 +1,8 @@
 #include "tokenclass.h"
 
-const int INTSIZE = 4;
-
 const string emptyString = "";
+
+extern const int INTSIZE;
 
 // ============= Token =============
 Token::Token(TokenType tp) {
@@ -12,14 +12,16 @@ TokenType Token::Type() const {return type;}
 
 // ============= IdentToken =============
 int IdentToken::count = 0;
-IdentToken::IdentToken(const string &_name, TokenType tp, bool is_const, bool is_tmp, bool is_param):
+IdentToken::IdentToken(const string &_name, TokenType tp, bool should_assign,
+                        bool is_const, bool is_tmp, bool is_param):
     Token(tp) {
         name = _name;
         is_c = is_const;
         is_p = is_param;
         is_t = is_tmp;
+        s_assign = should_assign;
 
-        if (!is_c) {
+        if (s_assign) {
             num = count++;
             if (is_param)
                 eeyore_name = "p" + to_string(num);
@@ -48,17 +50,19 @@ bool IdentToken::operator||(const IdentToken &b) const {
 
 // ============= IntIdentToken =============
 IntIdentToken::IntIdentToken(const string &_name, bool is_const, bool is_tmp, bool is_param):
-    IdentToken(_name, IntType, is_const, is_tmp, is_param) {
+    IdentToken(_name, IntType, !is_const, is_const, is_tmp, is_param) {
+        // If it is a const, don't assign
         val = 0;
         if (is_c) eeyore_name = to_string(val);
     }
 IntIdentToken::IntIdentToken(int v, bool is_tmp, bool is_param):
-    IdentToken(emptyString, IntType, true, is_tmp, is_param) {
+    IdentToken(emptyString, IntType, false, true, is_tmp, is_param) {
+        // This is a const. Don't assign.
         val = v;
         if (is_c) eeyore_name = to_string(val);
     }
 IntIdentToken::IntIdentToken(bool is_tmp, bool is_param):
-    IdentToken(emptyString, IntType, false, is_tmp, is_param) {}
+    IdentToken(emptyString, IntType, true, false, is_tmp, is_param) {}
 
 int IntIdentToken::Val() const {return val;}
 void IntIdentToken::setVal(int v) {
@@ -71,7 +75,9 @@ string IntIdentToken::Declare() const {
 
 // ============= ArrayIdentToken =============
 ArrayIdentToken::ArrayIdentToken(const string &_name, bool is_const, bool is_tmp, bool is_param):
-    IdentToken(_name, ArrayType, is_const, is_tmp, is_param) {}
+    IdentToken(_name, ArrayType, true, is_const, is_tmp, is_param) {
+        // Always assign
+    }
 
 void ArrayIdentToken::setShape(vector<int> &_shape) {
     shape = _shape;
@@ -154,4 +160,16 @@ bool ArrayOperator::jumpOne() {
     if (layer >= target->dim) return false;
     index += target->shape[layer];
     return true;
+}
+
+string& ArrayOperator::name() {
+    return target->getName();
+}
+
+int ArrayOperator::size() {
+    return target->size();
+}
+
+int ArrayOperator::operator[](int i) {
+    return target->vals[i];
 }

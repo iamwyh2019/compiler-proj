@@ -20,6 +20,7 @@ void yyerror(const char *);
 void yyerror(const string&);
 extern int yylex();
 extern int yyparse();
+extern const int INTSIZE;
 
 Scope globalScope;
 Scope *nowScope = &globalScope;
@@ -85,9 +86,17 @@ ConstDef:   IDENT ASSIGN ConstInitVal
         cid->setShape(*(vector<int>*)$2);
         nowScope->addToken(cid);
 
+        out << cid->Declare() << endl;
+
         arrOp.setTarget(cid);
     }
     ASSIGN ConstArrayVal
+    {
+        string &arrName = arrOp.name();
+        int n = arrOp.size();
+        for (int i = 0; i < n; ++i)
+            out << arrName << "[" << i*INTSIZE << "] = " << arrOp[i] << endl;
+    }
     ;
 
 ConstArrayVal:  ConstExp
@@ -189,7 +198,10 @@ Cond:   LOrExp;
 LVal:   IDENT
     {
         auto name = *(string*)$1;
-        auto cid = (IntIdentToken*)nowScope->findAll(name);
+        auto cid = (IdentToken*)nowScope->findAll(name);
+        if (cid->Type() != IntType)
+            yyerror("Need an integer identifier!");
+        cid = (IntIdentToken*)cid;
 
         if (cid == nullptr) {
             string errmsg = "\"";
