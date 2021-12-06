@@ -62,12 +62,10 @@ ConstDef:   IDENT ASSIGN ConstInitVal
             yyerror(errmsg);
         }
 
-        auto cid = new IntIdentToken(*(string*)$1, true); // const
+        auto cid = new IntIdentToken(name, true); // const
         cid->setVal(V($3));
         nowScope->addToken(cid);
-
-        out << cid->Declare() << endl;
-        out << cid->getName() << "=" << to_string(cid->Val()) << endl;
+        
     }
     |   IDENT ArrayDim
     {
@@ -139,11 +137,19 @@ VarDef: IDENT
             yyerror(errmsg);
         }
 
-        auto cid = new IntIdentToken(*(string*)$1, false); // not const
-        nowScope->addToken(cid);
+        IntIdentToken *cid;
 
-        out << cid->Declare() << endl;
-        out << cid->getName() << "=" << initRes->getName() << endl;
+        if (!initRes->isTmp()) {
+            cid = new IntIdentToken(name, false); // not const
+            out << cid->Declare() << endl;
+            out << cid->getName() << "=" << initRes->getName() << endl;
+        }
+        else {
+            cid = initRes;
+            cid->setName(name);
+            cid->setTmp(false);
+        }
+        nowScope->addToken(cid);
     }
     ;
 InitVal:    Exp {$$ = $1;}
@@ -181,7 +187,7 @@ UnaryExp:   PrimaryExp {$$ = $1;}
         else {
             auto newcid = new IntIdentToken(-cid->Val(), false, true);
             out << newcid->Declare() << endl;
-            out << cid->getName() << "=-" << newcid->getName() << endl;
+            out << newcid->getName() << "=-" << cid->getName() << endl;
             $$ = newcid;
         }
     }
@@ -191,9 +197,9 @@ UnaryExp:   PrimaryExp {$$ = $1;}
         if (cid->isConst())
             $$ = new IntIdentToken(!cid->Val());
         else {
-            auto newcid = new IntIdentToken(-cid->Val(), false, true);
+            auto newcid = new IntIdentToken(!cid->Val(), false, true);
             out << newcid->Declare() << endl;
-            out << cid->getName() << "=!" << newcid->getName() << endl;
+            out << newcid->getName() << "=!" << cid->getName() << endl;
             $$ = newcid;
         }
     }
@@ -204,11 +210,11 @@ MulExp:     UnaryExp {$$ = $1;}
     | MulExp MUL UnaryExp
     {
         auto c1 = (IntIdentToken*)$1, c2 = (IntIdentToken*)$3;
-        if (*c1&*c2) {
+        if (*c1&&*c2) {
             $$ = new IntIdentToken(c1->Val() * c2->Val());
         }
         else {
-            auto newcid = new IntIdentToken(c1->Val() * c2->Val(), false, true);
+            auto newcid = new IntIdentToken(c1->Val() * c2->Val(), false, true); // A tmp var
             out << newcid->Declare() << endl;
             out << newcid->getName() << "=" << c1->getName() << "*" << c2->getName() << endl;
             $$ = newcid;
@@ -217,11 +223,11 @@ MulExp:     UnaryExp {$$ = $1;}
     | MulExp DIV UnaryExp
     {
         auto c1 = (IntIdentToken*)$1, c2 = (IntIdentToken*)$3;
-        if (*c1&*c2) {
+        if (*c1&&*c2) {
             $$ = new IntIdentToken(c1->Val() / c2->Val());
         }
         else {
-            auto newcid = new IntIdentToken(c1->Val() / c2->Val(), false, true);
+            auto newcid = new IntIdentToken(c1->Val() / c2->Val(), false, true); // A tmp var
             out << newcid->Declare() << endl;
             out << newcid->getName() << "=" << c1->getName() << "/" << c2->getName() << endl;
             $$ = newcid;
@@ -230,7 +236,7 @@ MulExp:     UnaryExp {$$ = $1;}
     | MulExp MOD UnaryExp
     {
         auto c1 = (IntIdentToken*)$1, c2 = (IntIdentToken*)$3;
-        if (*c1&*c2) {
+        if (*c1&&*c2) {
             $$ = new IntIdentToken(c1->Val() % c2->Val());
         }
         else {
@@ -245,7 +251,7 @@ AddExp:     MulExp {$$ = $1;}
     | AddExp ADD MulExp
     {
         auto c1 = (IntIdentToken*)$1, c2 = (IntIdentToken*)$3;
-        if (*c1&*c2) {
+        if (*c1&&*c2) {
             $$ = new IntIdentToken(c1->Val() + c2->Val());
         }
         else {
@@ -258,7 +264,7 @@ AddExp:     MulExp {$$ = $1;}
     | AddExp SUB MulExp
     {
         auto c1 = (IntIdentToken*)$1, c2 = (IntIdentToken*)$3;
-        if (*c1&*c2) {
+        if (*c1&&*c2) {
             $$ = new IntIdentToken(c1->Val() - c2->Val());
         }
         else {

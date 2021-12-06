@@ -32,6 +32,7 @@ public:
 // is_const: whether it is a constant
 // is_param: is this a parameter or a global variable
 class IdentToken: public Token {
+protected:
     bool is_c, is_p, is_t;
     string name, eeyore_name;
     static int count;
@@ -39,11 +40,22 @@ class IdentToken: public Token {
 public:
     IdentToken(const string&, TokenType, bool=false, bool=false, bool=false);
     virtual ~IdentToken()=0;
+
     bool isConst() const;
-    string& Name();
-    string getName() const;
+    bool isTmp() const;
+    bool isParam() const;
+    void setConst(bool);
+    void setTmp(bool);
+    void setParam(bool); 
+    
+    string& Name(); // Get the variable name
+    void setName(string&); // set the variable name
+    string& getName(); // Get the eeyore name
+
     virtual string Declare() const=0;
-    bool operator&(const IdentToken&b) const;
+
+    bool operator&&(const IdentToken&b) const;
+    bool operator||(const IdentToken&b) const;
 };
 
 // IntIdentToken, has TokenType int
@@ -52,7 +64,7 @@ class IntIdentToken: public IdentToken {
     int val;
 public:
     IntIdentToken(const string&, bool, bool=false, bool=false);
-    IntIdentToken(int, bool=true, bool=true);
+    IntIdentToken(int, bool=true, bool=false, bool=false);
     int Val() const;
     void setVal(int);
     virtual string Declare() const;
@@ -88,6 +100,15 @@ public:
     IdentToken* findOne(string&) const;
     IdentToken* findAll(string&) const;
     void addToken(IdentToken*);
+};
+
+
+// Initializer, used to initialize arrays
+class Initializer {
+    ArrayIdentToken *target;
+    int layer;
+public:
+    void setTarget(ArrayIdentToken*);
 };
 
 #endif
