@@ -1,5 +1,7 @@
 #include "tokenclass.h"
 
+const int INTSIZE = 4;
+
 // ============= Token =============
 Token::Token(TokenType tp) {
     type = tp;
@@ -23,9 +25,10 @@ IdentToken::IdentToken(string &_name, TokenType tp, bool is_const, bool is_param
         num = count++;
         num_text = to_string(num);
     }
+IdentToken::~IdentToken(){}
 string& IdentToken::Name() {return name;}
 bool IdentToken::isConst() const {return is_c;}
-string IdentToken::getName(){
+string IdentToken::getName() const{
     if (is_p) return "p" + num_text;
     else return "T" + num_text;
 }
@@ -36,6 +39,9 @@ IntIdentToken::IntIdentToken(string &_name, bool is_const):
 
 int IntIdentToken::Val() const {return val;}
 void IntIdentToken::setVal(int v) {val = v;}
+string IntIdentToken::Decl() const {
+    return "var " + getName();
+}
 
 // ============= ArrayIdentToken =============
 ArrayIdentToken::ArrayIdentToken(string &_name, bool is_const):
@@ -54,6 +60,10 @@ void ArrayIdentToken::setShape(vector<int> &_shape) {
 
 const int ArrayIdentToken::size() const {
     return shape[0];
+}
+
+string ArrayIdentToken::Decl() const {
+    return "var " + to_string(shape[0]*INTSIZE) + " " + getName();
 }
 
 // ============= Scope =============

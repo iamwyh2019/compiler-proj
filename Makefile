@@ -30,11 +30,15 @@ TARGET_DIR = $(BUILD_DIR)/$(TARGET_EXEC)
 YACC_OUT = $(BUILD_DIR)/parser.tab.h $(BUILD_DIR)/parser.tab.c
 
 # Token class
-TOKEN_CLASS = $(SOURCE_DIR)/tokenclass.cpp
+TOKEN_SOURCE = $(SOURCE_DIR)/tokenclass.cpp $(SOURCE_DIR)/tokenclass.h
+TOKEN_CLASS = $(BUILD_DIR)/tokenclass.o
 
 # Generation rules
 $(TARGET_DIR): $(BUILD_DIR)/scanner.cpp $(BUILD_DIR)/parser.tab.c $(TOKEN_CLASS)
-	$(CPP) $(CPPFLAGS) -o $@ -I $(SOURCE_DIR) $^ 
+	$(CPP) $(CPPFLAGS) -o $@ -I $(SOURCE_DIR) $^
+
+$(TOKEN_CLASS): $(TOKEN_SOURCE)
+	$(CPP) $(CPPFLAGS) -c -o $@ -I $(SOURCE_DIR) $<
 
 $(BUILD_DIR)/scanner.cpp: $(SOURCE_DIR)/scanner.l $(YACC_OUT)
 	mkdir -p $(dir $@)

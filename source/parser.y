@@ -60,14 +60,25 @@ ConstDef:   IDENT ASSIGN ConstInitVal
 
         auto cid = new IntIdentToken(*(string*)$1, true); // const
         cid->setVal(V($3));
+        cout << cid->Decl() << endl;
         nowScope->addToken(cid);
     }
     |   IDENT ArrayDim
     {
-        cout << "New constant array with shape";
-        for (auto s:*(vector<int>*)$2)
-            cout << " " << s;
-        cout << endl;
+        auto name = *(string*)$1;
+        auto oldcid = nowScope->findOne(name);
+
+        if (oldcid != nullptr) {
+            string errmsg = "\"";
+            errmsg += name;
+            errmsg += "\" already defined in this scope.";
+            yyerror(errmsg);
+        }
+
+        auto cid = new ArrayIdentToken(*(string*)$1, true); // const
+        cid->setShape(*(vector<int>*)$2);
+        cout << cid->Decl() << endl;
+        nowScope->addToken(cid);
     }
     ;
 

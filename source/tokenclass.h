@@ -53,9 +53,11 @@ class IdentToken: public Token {
     int num;
 public:
     IdentToken(string&, TokenType, bool=false, bool=false);
+    virtual ~IdentToken()=0;
     bool isConst() const;
     string& Name();
-    string getName();
+    string getName() const;
+    virtual string Decl() const=0;
 };
 
 // IntIdentToken, has TokenType int
@@ -66,6 +68,7 @@ public:
     IntIdentToken(string&, bool);
     int Val() const;
     void setVal(int);
+    virtual string Decl() const;
 };
 
 // ArrayIdentToken, has TokenType array
@@ -79,6 +82,7 @@ public:
     ArrayIdentToken(string&, bool);
     void setShape(vector<int>&);
     const int size() const;
+    virtual string Decl() const;
 };
 
 // Scope
