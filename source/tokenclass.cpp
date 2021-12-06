@@ -9,10 +9,10 @@ TokenType Token::Type() const {return type;}
 string& Token::Name() {return name;}
 
 IdentToken::IdentToken(string &_name, bool is_const, TokenType tp):
-    Token(_name, tp), is_c(is_const) {}
+    Token(_name, tp) {is_c = is_const;}
 
 IntIdentToken::IntIdentToken(string &_name, bool is_const):
-    IdentToken(_name, is_const, IntType), val(0) {}
+    IdentToken(_name, is_const, IntType) {val = 0;}
 
 int IntIdentToken::Val() const {return val;}
 

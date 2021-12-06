@@ -39,6 +39,7 @@ Scope *nowScope = &globalScope;
 CompUnit:   Decl
     | CompUnit Decl;
 Decl:       ConstDecl
+    | VarDecl
     ;
 ConstDecl:  CONST INT ConstDefList SEMI
     ;
@@ -60,11 +61,54 @@ ConstDef:   IDENT ASSIGN ConstInitVal
         auto cid = new IntIdentToken(*(string*)$1, true); // const
         cid->setVal(V($3));
         nowScope->addToken(cid);
-        $$ = cid;
 
         cout << "New constant with name " << name << " and value " << cid->Val() << endl;
     }
 ConstInitVal:   ConstExp {$$ = $1;}
+    ;
+
+VarDecl:    INT VarDefList SEMI
+    ;
+VarDefList: VarDef
+    | VarDefList COMMA VarDef
+    ;
+VarDef: IDENT
+    {
+        auto name = *(string*)$1;
+        auto oldcid = nowScope->findOne(name);
+
+        if (oldcid != nullptr) {
+            string errmsg = "\"";
+            errmsg += name;
+            errmsg += "\" already defined in this scope.";
+            yyerror(errmsg);
+        }
+
+        auto cid = new IntIdentToken(*(string*)$1, false); // not const. Initially 0
+        nowScope->addToken(cid);
+
+        cout << "New variable with name " << name << " and no initial value" << endl;
+    }
+    | IDENT ASSIGN InitVal
+    {
+        auto name = *(string*)$1;
+        auto oldcid = nowScope->findOne(name);
+
+        if (oldcid != nullptr) {
+            string errmsg = "\"";
+            errmsg += name;
+            errmsg += "\" already defined in this scope.";
+            yyerror(errmsg);
+        }
+
+        auto cid = new IntIdentToken(*(string*)$1, false); // not const. Initially 0
+        cid->setVal(V($3));
+        nowScope->addToken(cid);
+
+        cout << "New variable with name " << name << " and initial value " << cid->Val() << endl;
+    }
+    ;
+InitVal:    Exp {$$ = $1;}
     ;
 
 Exp:    AddExp;
