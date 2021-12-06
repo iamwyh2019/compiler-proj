@@ -26,38 +26,24 @@ public:
     TokenType Type() const;
 };
 
-// IntToken, just an int literal
-// is_const: whether it is derived from a const
-// NUMBER and constants are const
-// Calculation between them are all const
-// Otherwise it is variable
-class IntToken: public Token {
-    int val;
-    bool is_c;
-public:
-    IntToken(int, bool);
-    int Val() const;
-    bool isConst() const;
-    bool operator&(const IntToken&) const;
-};
-
 // Identifier
 // Name: name of the identifier
 // TokenType: either int or array
 // is_const: whether it is a constant
 // is_param: is this a parameter or a global variable
 class IdentToken: public Token {
-    bool is_c, is_p;
-    string name, num_text;
+    bool is_c, is_p, is_t;
+    string name, eeyore_name;
     static int count;
     int num;
 public:
-    IdentToken(string&, TokenType, bool=false, bool=false);
+    IdentToken(const string&, TokenType, bool=false, bool=false, bool=false);
     virtual ~IdentToken()=0;
     bool isConst() const;
     string& Name();
     string getName() const;
-    virtual string Decl() const=0;
+    virtual string Declare() const=0;
+    bool operator&(const IdentToken&b) const;
 };
 
 // IntIdentToken, has TokenType int
@@ -65,10 +51,11 @@ public:
 class IntIdentToken: public IdentToken {
     int val;
 public:
-    IntIdentToken(string&, bool);
+    IntIdentToken(const string&, bool, bool=false, bool=false);
+    IntIdentToken(int, bool=true, bool=true);
     int Val() const;
     void setVal(int);
-    virtual string Decl() const;
+    virtual string Declare() const;
 };
 
 // ArrayIdentToken, has TokenType array
@@ -79,10 +66,10 @@ class ArrayIdentToken: public IdentToken {
     vector<int> shape;
     int dim;
 public:
-    ArrayIdentToken(string&, bool);
+    ArrayIdentToken(const string&, bool, bool=false, bool=false);
     void setShape(vector<int>&);
     const int size() const;
-    virtual string Decl() const;
+    virtual string Declare() const;
 };
 
 // Scope

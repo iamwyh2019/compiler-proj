@@ -7,6 +7,7 @@
 
 // Common headers
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <cstdlib>
 using namespace std;
@@ -22,6 +23,9 @@ extern int yyparse();
 
 Scope globalScope;
 Scope *nowScope = &globalScope;
+
+// Currently print to the screen. Will change to files.
+ostream &out = cout;
 
 %}
 
@@ -60,8 +64,10 @@ ConstDef:   IDENT ASSIGN ConstInitVal
 
         auto cid = new IntIdentToken(*(string*)$1, true); // const
         cid->setVal(V($3));
-        cout << cid->Decl() << endl;
         nowScope->addToken(cid);
+
+        out << cid->Declare() << endl;
+        out << cid->getName() << "=" << to_string(cid->Val()) << endl;
     }
     |   IDENT ArrayDim
     {
@@ -77,8 +83,9 @@ ConstDef:   IDENT ASSIGN ConstInitVal
 
         auto cid = new ArrayIdentToken(*(string*)$1, true); // const
         cid->setShape(*(vector<int>*)$2);
-        cout << cid->Decl() << endl;
         nowScope->addToken(cid);
+
+        out << cid->Declare() << endl;
     }
     ;
 
@@ -116,11 +123,14 @@ VarDef: IDENT
 
         auto cid = new IntIdentToken(*(string*)$1, false); // not const. Initially 0
         nowScope->addToken(cid);
+
+        out << cid->Declare() << endl;
     }
     | IDENT ASSIGN InitVal
     {
         auto name = *(string*)$1;
         auto oldcid = nowScope->findOne(name);
+        auto initRes = (IntIdentToken*)$3;
 
         if (oldcid != nullptr) {
             string errmsg = "\"";
@@ -129,9 +139,11 @@ VarDef: IDENT
             yyerror(errmsg);
         }
 
-        auto cid = new IntIdentToken(*(string*)$1, false); // not const. Initially 0
-        cid->setVal(V($3));
+        auto cid = new IntIdentToken(*(string*)$1, false); // not const
         nowScope->addToken(cid);
+
+        out << cid->Declare() << endl;
+        out << cid->getName() << "=" << initRes->getName() << endl;
     }
     ;
 InitVal:    Exp {$$ = $1;}
@@ -155,25 +167,35 @@ LVal:   IDENT
     }
     ;
 PrimaryExp: LPAREN Exp RPAREN {$$ = $2;}
-    | LVal
-    {
-        auto cid = (IntIdentToken*)$1;
-        $$ = new IntToken(cid->Val(), cid->isConst());
-    }
-    | NUMBER { $$ = new IntToken(V($1), true);}
+    | LVal {$$ = $1;}
+    | NUMBER { $$ = new IntIdentToken(V($1));}
     ;
 UnaryExp:   PrimaryExp {$$ = $1;}
     | IDENT LPAREN [FuncParams] RPAREN
     | ADD UnaryExp {$$ = $2;}
     | SUB UnaryExp
     {
-        auto cid = (IntToken*)$2;
-        $$ = new IntToken(-cid->Val(), cid->isConst());
+        auto cid = (IntIdentToken*)$2;
+        if (cid->isConst())
+            $$ = new IntIdentToken(-cid->Val());
+        else {
+            auto newcid = new IntIdentToken(-cid->Val(), false, true);
+            out << newcid->Declare() << endl;
+            out << cid->getName() << "=-" << newcid->getName() << endl;
+            $$ = newcid;
+        }
     }
     | NOT UnaryExp
     {
-        auto cid = (IntToken*)$2;
-        $$ = new IntToken(!cid->Val(), cid->isConst());
+        auto cid = (IntIdentToken*)$2;
+        if (cid->isConst())
+            $$ = new IntIdentToken(!cid->Val());
+        else {
+            auto newcid = new IntIdentToken(-cid->Val(), false, true);
+            out << newcid->Declare() << endl;
+            out << cid->getName() << "=!" << newcid->getName() << endl;
+            $$ = newcid;
+        }
     }
     ;
 FuncParams: Exp
@@ -181,30 +203,70 @@ FuncParams: Exp
 MulExp:     UnaryExp {$$ = $1;}
     | MulExp MUL UnaryExp
     {
-        auto c1 = (IntToken*)$1, c2 = (IntToken*)$3;
-        $$ = new IntToken(c1->Val() * c2->Val(), *c1&*c2);
+        auto c1 = (IntIdentToken*)$1, c2 = (IntIdentToken*)$3;
+        if (*c1&*c2) {
+            $$ = new IntIdentToken(c1->Val() * c2->Val());
+        }
+        else {
+            auto newcid = new IntIdentToken(c1->Val() * c2->Val(), false, true);
+            out << newcid->Declare() << endl;
+            out << newcid->getName() << "=" << c1->getName() << "*" << c2->getName() << endl;
+            $$ = newcid;
+        }
     }
     | MulExp DIV UnaryExp
     {
-        auto c1 = (IntToken*)$1, c2 = (IntToken*)$3;
-        $$ = new IntToken(c1->Val() / c2->Val(), *c1&*c2);
+        auto c1 = (IntIdentToken*)$1, c2 = (IntIdentToken*)$3;
+        if (*c1&*c2) {
+            $$ = new IntIdentToken(c1->Val() / c2->Val());
+        }
+        else {
+            auto newcid = new IntIdentToken(c1->Val() / c2->Val(), false, true);
+            out << newcid->Declare() << endl;
+            out << newcid->getName() << "=" << c1->getName() << "/" << c2->getName() << endl;
+            $$ = newcid;
+        }
     }
     | MulExp MOD UnaryExp
     {
-        auto c1 = (IntToken*)$1, c2 = (IntToken*)$3;
-        $$ = new IntToken(c1->Val() % c2->Val(), *c1&*c2);
+        auto c1 = (IntIdentToken*)$1, c2 = (IntIdentToken*)$3;
+        if (*c1&*c2) {
+            $$ = new IntIdentToken(c1->Val() % c2->Val());
+        }
+        else {
+            auto newcid = new IntIdentToken(c1->Val() % c2->Val(), false, true);
+            out << newcid->Declare() << endl;
+            out << newcid->getName() << "=" << c1->getName() << "%" << c2->getName() << endl;
+            $$ = newcid;
+        }
     }
     ;
 AddExp:     MulExp {$$ = $1;}
     | AddExp ADD MulExp
     {
-        auto c1 = (IntToken*)$1, c2 = (IntToken*)$3;
-        $$ = new IntToken(c1->Val() + c2->Val(), *c1&*c2);
+        auto c1 = (IntIdentToken*)$1, c2 = (IntIdentToken*)$3;
+        if (*c1&*c2) {
+            $$ = new IntIdentToken(c1->Val() + c2->Val());
+        }
+        else {
+            auto newcid = new IntIdentToken(c1->Val() + c2->Val(), false, true);
+            out << newcid->Declare() << endl;
+            out << newcid->getName() << "=" << c1->getName() << "+" << c2->getName() << endl;
+            $$ = newcid;
+        }
     }
     | AddExp SUB MulExp
     {
-        auto c1 = (IntToken*)$1, c2 = (IntToken*)$3;
-        $$ = new IntToken(c1->Val() - c2->Val(), *c1&*c2);
+        auto c1 = (IntIdentToken*)$1, c2 = (IntIdentToken*)$3;
+        if (*c1&*c2) {
+            $$ = new IntIdentToken(c1->Val() - c2->Val());
+        }
+        else {
+            auto newcid = new IntIdentToken(c1->Val() - c2->Val(), false, true);
+            out << newcid->Declare() << endl;
+            out << newcid->getName() << "=" << c1->getName() << "-" << c2->getName() << endl;
+            $$ = newcid;
+        }
     }
     ;
 RelExp:     AddExp {$$ = $1;}
@@ -225,7 +287,7 @@ LOrExp:     LAndExp {$$ = $1;}
     ;
 ConstExp:   AddExp
     {
-        auto cid = (IntToken*)$1;
+        auto cid = (IntIdentToken*)$1;
         if (!cid->isConst()) {
             yyerror("Expecting constant expression.");
         }

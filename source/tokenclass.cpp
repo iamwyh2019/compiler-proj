@@ -2,53 +2,58 @@
 
 const int INTSIZE = 4;
 
+const string emptyString = "";
+
 // ============= Token =============
 Token::Token(TokenType tp) {
     type = tp;
 }
 TokenType Token::Type() const {return type;}
 
-// ============= IntToken =============
-IntToken::IntToken(int v, bool is_const):
-    Token(IntType) {val = v; is_c = is_const;}
-int IntToken::Val() const {return val;}
-bool IntToken::isConst() const {return is_c;}
-bool IntToken::operator&(const IntToken &b) const {return is_c && b.is_c;}
-
 // ============= IdentToken =============
 int IdentToken::count = 0;
-IdentToken::IdentToken(string &_name, TokenType tp, bool is_const, bool is_param):
+IdentToken::IdentToken(const string &_name, TokenType tp, bool is_const, bool is_param, bool is_tmp):
     Token(tp) {
         name = _name;
         is_c = is_const;
         is_p = is_param;
-        num = count++;
-        num_text = to_string(num);
+
+        if (!(is_const && is_tmp)) {
+            num = count++;
+            if (is_param)
+                eeyore_name = "p" + to_string(num);
+            else
+                eeyore_name = "T" + to_string(num);
+        }
+        else {
+            eeyore_name = name;
+        }
     }
 IdentToken::~IdentToken(){}
 string& IdentToken::Name() {return name;}
 bool IdentToken::isConst() const {return is_c;}
 string IdentToken::getName() const{
-    if (is_p) return "p" + num_text;
-    else return "T" + num_text;
+    return eeyore_name;
+}
+bool IdentToken::operator&(const IdentToken &b) const {
+    return is_c && b.is_c;
 }
 
 // ============= IntIdentToken =============
-IntIdentToken::IntIdentToken(string &_name, bool is_const):
-    IdentToken(_name, IntType, is_const) {val = 0;}
+IntIdentToken::IntIdentToken(const string &_name, bool is_const, bool is_param, bool is_tmp):
+    IdentToken(_name, IntType, is_const, is_param, is_tmp) {val = 0;}
+IntIdentToken::IntIdentToken(int v, bool is_const, bool is_tmp):
+    IdentToken(to_string(v), IntType, is_const, false, is_tmp) {val = v;}
 
 int IntIdentToken::Val() const {return val;}
 void IntIdentToken::setVal(int v) {val = v;}
-string IntIdentToken::Decl() const {
+string IntIdentToken::Declare() const {
     return "var " + getName();
 }
 
 // ============= ArrayIdentToken =============
-ArrayIdentToken::ArrayIdentToken(string &_name, bool is_const):
-    IdentToken(_name, ArrayType, is_const) {
-        dim = 0;
-        shape = vector<int>(1,0);
-    }
+ArrayIdentToken::ArrayIdentToken(const string &_name, bool is_const, bool is_param, bool is_tmp):
+    IdentToken(_name, ArrayType, is_const, is_param, is_tmp) {}
 
 void ArrayIdentToken::setShape(vector<int> &_shape) {
     shape = _shape;
@@ -62,7 +67,7 @@ const int ArrayIdentToken::size() const {
     return shape[0];
 }
 
-string ArrayIdentToken::Decl() const {
+string ArrayIdentToken::Declare() const {
     return "var " + to_string(shape[0]*INTSIZE) + " " + getName();
 }
 
