@@ -61,9 +61,28 @@ ConstDef:   IDENT ASSIGN ConstInitVal
         auto cid = new IntIdentToken(*(string*)$1, true); // const
         cid->setVal(V($3));
         nowScope->addToken(cid);
-
-        cout << "New constant with name " << name << " and value " << cid->Val() << endl;
     }
+    |   IDENT ArrayDim
+    {
+        cout << "New constant array with shape";
+        for (auto s:*(vector<int>*)$2)
+            cout << " " << s;
+        cout << endl;
+    }
+    ;
+
+ArrayDim:   ArrayDim LBRAC ConstExp RBRAC
+    {
+        $$ = $1;
+        ((vector<int>*)$$)->push_back(V($3));
+    }
+    | LBRAC ConstExp RBRAC
+    {
+        $$ = new vector<int>;
+        ((vector<int>*)$$)->push_back(V($2));
+    }
+    ;
+
 ConstInitVal:   ConstExp {$$ = $1;}
     ;
 
@@ -86,8 +105,6 @@ VarDef: IDENT
 
         auto cid = new IntIdentToken(*(string*)$1, false); // not const. Initially 0
         nowScope->addToken(cid);
-
-        cout << "New variable with name " << name << " and no initial value" << endl;
     }
     | IDENT ASSIGN InitVal
     {
@@ -104,8 +121,6 @@ VarDef: IDENT
         auto cid = new IntIdentToken(*(string*)$1, false); // not const. Initially 0
         cid->setVal(V($3));
         nowScope->addToken(cid);
-
-        cout << "New variable with name " << name << " and initial value " << cid->Val() << endl;
     }
     ;
 InitVal:    Exp {$$ = $1;}
@@ -125,29 +140,61 @@ LVal:   IDENT
             yyerror(errmsg);
         }
 
-        $$ = new int(cid->Val());
+        $$ = cid;
     }
     ;
 PrimaryExp: LPAREN Exp RPAREN {$$ = $2;}
-    | LVal {$$ = $1;}
-    | NUMBER { $$ = $1;}
+    | LVal
+    {
+        auto cid = (IntIdentToken*)$1;
+        $$ = new IntToken(cid->Val(), cid->isConst());
+    }
+    | NUMBER { $$ = new IntToken(V($1), true);}
     ;
 UnaryExp:   PrimaryExp {$$ = $1;}
     | IDENT LPAREN [FuncParams] RPAREN
     | ADD UnaryExp {$$ = $2;}
-    | SUB UnaryExp {$$ = new int(-V($2));}
-    | NOT UnaryExp {$$ = new int(!V($2));}
+    | SUB UnaryExp
+    {
+        auto cid = (IntToken*)$2;
+        $$ = new IntToken(-cid->Val(), cid->isConst());
+    }
+    | NOT UnaryExp
+    {
+        auto cid = (IntToken*)$2;
+        $$ = new IntToken(!cid->Val(), cid->isConst());
+    }
     ;
 FuncParams: Exp
     ;
 MulExp:     UnaryExp {$$ = $1;}
-    | MulExp MUL UnaryExp {$$ = new int(V($1)*V($3));}
-    | MulExp DIV UnaryExp {$$ = new int(V($1)/V($3));}
-    | MulExp MOD UnaryExp {$$ = new int(V($1)%V($3));}
+    | MulExp MUL UnaryExp
+    {
+        auto c1 = (IntToken*)$1, c2 = (IntToken*)$3;
+        $$ = new IntToken(c1->Val() * c2->Val(), *c1&*c2);
+    }
+    | MulExp DIV UnaryExp
+    {
+        auto c1 = (IntToken*)$1, c2 = (IntToken*)$3;
+        $$ = new IntToken(c1->Val() / c2->Val(), *c1&*c2);
+    }
+    | MulExp MOD UnaryExp
+    {
+        auto c1 = (IntToken*)$1, c2 = (IntToken*)$3;
+        $$ = new IntToken(c1->Val() % c2->Val(), *c1&*c2);
+    }
     ;
 AddExp:     MulExp {$$ = $1;}
-    | AddExp ADD MulExp {$$ = new int(V($1)+V($3));}
-    | AddExp SUB MulExp {$$ = new int(V($1)-V($3));}
+    | AddExp ADD MulExp
+    {
+        auto c1 = (IntToken*)$1, c2 = (IntToken*)$3;
+        $$ = new IntToken(c1->Val() + c2->Val(), *c1&*c2);
+    }
+    | AddExp SUB MulExp
+    {
+        auto c1 = (IntToken*)$1, c2 = (IntToken*)$3;
+        $$ = new IntToken(c1->Val() - c2->Val(), *c1&*c2);
+    }
     ;
 RelExp:     AddExp {$$ = $1;}
     | RelExp LE AddExp {$$ = new bool(V($1)<V($3));}
@@ -165,7 +212,14 @@ LAndExp:    EqExp {$$ = $1;}
 LOrExp:     LAndExp {$$ = $1;}
     | LOrExp OR LAndExp {$$ = new bool(V($1)||V($3));}
     ;
-ConstExp:   AddExp {$$ = $1;}
+ConstExp:   AddExp
+    {
+        auto cid = (IntToken*)$1;
+        if (!cid->isConst()) {
+            yyerror("Expecting constant expression.");
+        }
+        $$ = new int(cid->Val());
+    }
     ;
 %%
 

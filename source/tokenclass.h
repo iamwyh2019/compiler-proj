@@ -4,23 +4,38 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <vector>
 using std::string;
 using std::map;
+using std::vector;
 
 enum TokenType {
     IntType,
-    ArrayType
+    ArrayType,
 };
 
 // The general token class
 // Type: token type
 class Token {
     TokenType type;
-    string name;
 public:
-    Token(string&, TokenType);
+    Token(TokenType);
     TokenType Type() const;
-    string& Name();
+};
+
+// IntToken, just an int literal
+// is_const: whether it is derived from a const
+// NUMBER and constants are const
+// Calculation between them are all const
+// Otherwise it is variable
+class IntToken: public Token {
+    int val;
+    bool is_c;
+public:
+    IntToken(int, bool);
+    int Val() const;
+    bool isConst() const;
+    bool operator&(const IntToken&) const;
 };
 
 // Identifier
@@ -29,20 +44,35 @@ public:
 // is_const: whether it is a constant
 class IdentToken: public Token {
     bool is_c;
+    string name;
 public:
     IdentToken(string&, bool, TokenType);
     bool isConst() const;
+    string& Name();
 };
 
 // IntIdentToken, has TokenType int
-// Name: name of the identifier
-// is_const: whether it is a constant
+// val: the value of the token
 class IntIdentToken: public IdentToken {
     int val;
 public:
     IntIdentToken(string&, bool);
     int Val() const;
     void setVal(int);
+};
+
+// ArrayIdentToken, has TokenType array
+// shape: the dimension of the array
+// vals: flatten the array into an one-dim array
+// dim: dimension
+class ArrayIdentToken: public IdentToken {
+    vector<int> shape;
+    vector<int> vals;
+    int dim;
+public:
+    ArrayIdentToken(string&, bool);
+    void setShape(vector<int>&);
+    const int size() const;
 };
 
 // Scope
@@ -52,15 +82,15 @@ public:
 // findAll: given a name, find the token in ALL scopes; return the Token pointer
 // addToken: add a token to this scope. WILL NOT add to parent scope
 class Scope {
-    map<string, Token*> scope;
+    map<string, IdentToken*> scope;
     const Scope *parent;
-    Token* find(string&, bool) const;
+    IdentToken* find(string&, bool) const;
 public:
     Scope(const Scope *fa=nullptr);
     ~Scope();
-    Token* findOne(string&) const;
-    Token* findAll(string&) const;
-    void addToken(Token*);
+    IdentToken* findOne(string&) const;
+    IdentToken* findAll(string&) const;
+    void addToken(IdentToken*);
 };
 
 #endif

@@ -34,6 +34,3 @@ There are some builtin variables:
 **One point inspired by Zhenbang You**: the type of `yylval` is specified by `YYSTYPE` and is `int` on default. We can define it as `void*` (universal pointer) to support various types, and use `*yylval` to access its value (as long as you know its type). To do this, write `#define YYSTYPE void*` in both scanner and parser. You may also refer [here](https://www.coder4.com/archives/3975).
 
 Say in the parser there's a rule like: UNIT:  EXP1 EXP2 EXP3. We can access the value of EXP1, EXP2, EXP3 with $1 $2 $3 respectively.
-
-### 2021/12/5
-Zhenbang's code defines a large flat class `Var` to represent all identifiers (const, number, variable, array, etc.), which is good but not very elegant. I will try using different classes.
