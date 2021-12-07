@@ -1,5 +1,8 @@
 #include "tokenclass.h"
 
+#include <iostream>
+using namespace std;
+
 const string emptyString = "";
 
 extern const int INTSIZE;
@@ -85,8 +88,9 @@ void ArrayIdentToken::setShape(vector<int> &_shape) {
     for (int i = dim-2; i >= 0; --i)
         shape[i] *= shape[i+1];
     shape.push_back(1);
-    // If it is a constant, store the values. Otherwise just store its shape
+    // If it is a constant, store the values. Otherwise store the reference to its values
     if (is_c) vals = vector<int>(shape[0], 0);
+    else tokens = vector<IntIdentToken*>(shape[0], nullptr);
 }
 
 const int ArrayIdentToken::size() const {
@@ -144,6 +148,12 @@ bool ArrayOperator::addOne(int v) {
     return true;
 }
 
+bool ArrayOperator::addOne(IntIdentToken *v) {
+    if (index >= target->shape[0]) return false;
+    target->tokens[index++] = v;
+    return true;
+}
+
 bool ArrayOperator::moveDown() {
     ++layer;
     if (layer > target->dim) return false;
@@ -181,6 +191,10 @@ int ArrayOperator::ndim(int i) const {
 
 int ArrayOperator::operator[](int i) {
     return target->vals[i];
+}
+
+IntIdentToken* ArrayOperator::operator()(int i) {
+    return target->tokens[i];
 }
 
 int ArrayOperator::getOffset(vector<IntIdentToken*> &indices) {

@@ -25,7 +25,8 @@ extern const int INTSIZE;
 Scope globalScope;
 Scope *nowScope = &globalScope;
 
-auto arrOp = ArrayOperator();
+auto arrOp_assign = ArrayOperator();
+auto arrOp_access = ArrayOperator();
 
 // Currently print to the screen. Will change to files.
 ostream &out = cout;
@@ -88,35 +89,35 @@ ConstDef:   IDENT ASSIGN ConstInitVal
 
         out << cid->Declare() << endl;
 
-        arrOp.setTarget(cid);
+        arrOp_assign.setTarget(cid);
     }
     ASSIGN ConstArrayVal
     {
-        string &arrName = arrOp.name();
-        int n = arrOp.size();
+        string &arrName = arrOp_assign.name();
+        int n = arrOp_assign.size();
         for (int i = 0; i < n; ++i)
-            out << arrName << "[" << i*INTSIZE << "] = " << arrOp[i] << endl;
+            out << arrName << "[" << i*INTSIZE << "] = " << arrOp_assign[i] << endl;
     }
     ;
 
 ConstArrayVal:  ConstExp
     {
-        if (!arrOp.addOne(V($1)))
+        if (!arrOp_assign.addOne(V($1)))
             yyerror("Array out of bound.");
     }
     | LCURLY RCURLY
     {
-        if (!arrOp.jumpOne())
+        if (!arrOp_assign.jumpOne())
             yyerror("Nested list too deep.");
     }
     | LCURLY
     {
-        if (!arrOp.moveDown())
+        if (!arrOp_assign.moveDown())
             yyerror("Nested list too deep.");
     }
     ConstArrayVals RCURLY
     {
-        if (!arrOp.moveUp())
+        if (!arrOp_assign.moveUp())
             yyerror("Unknown error in \"}\"");
     }
     ;
@@ -161,6 +162,7 @@ VarDef: IDENT
         nowScope->addToken(cid);
 
         out << cid->Declare() << endl;
+        out << cid->getName() << " = 0" << endl;
     }
     | IDENT ASSIGN InitVal
     {
@@ -211,7 +213,70 @@ VarDef: IDENT
         for (int i = 0; i < size; ++i)
             out << arrName << "[" << i*4 << "] = 0" << endl;
     }
+    | IDENT ArrayDim
+    {
+        auto name = *(string*)$1;
+        auto oldcid = nowScope->findOne(name);
+
+        if (oldcid != nullptr) {
+            string errmsg = "\"";
+            errmsg += name;
+            errmsg += "\" already defined in this scope.";
+            yyerror(errmsg);
+        }
+
+        auto cid = new ArrayIdentToken(name, false); // not const. Initially 0
+        cid->setShape(*(vector<int>*)$2);
+        nowScope->addToken(cid);
+
+        out << cid->Declare() << endl;
+
+        arrOp_assign.setTarget(cid);
+    }
+    ASSIGN VarArrVal
+    {
+        string &arrName = arrOp_assign.name();
+        int n = arrOp_assign.size();
+        for (int i = 0; i < n; ++i) {
+            auto ele = arrOp_assign(i);
+            out << arrName << "[" << i*4 << "] = ";
+
+            if (ele == nullptr)
+                out << 0 << endl;
+            else if (ele->isConst())
+                out << ele->Val() << endl;
+            else
+                out << ele->getName() << endl;
+        }
+    }
     ;
+
+VarArrVal:  Exp
+    {
+        if (!arrOp_assign.addOne((IntIdentToken*)$1))
+            yyerror("Array out of bound.");
+    }
+    | LCURLY RCURLY
+    {
+        if (!arrOp_assign.jumpOne())
+            yyerror("Nested list too deep.");
+    }
+    | LCURLY
+    {
+        if (!arrOp_assign.moveDown())
+            yyerror("Nested list too deep.");
+    }
+    VarArrVals RCURLY
+    {
+        if (!arrOp_assign.moveUp())
+            yyerror("Unknown error in \"}\"");
+    }
+    ;
+
+VarArrVals: VarArrVals COMMA VarArrVal
+    | VarArrVal
+    ;
+
 InitVal:    Exp {$$ = $1;}
     ;
 
@@ -250,10 +315,10 @@ LVal:   IDENT
         if (cid->Type() != ArrayType)
             yyerror("Array identifier required.");
         auto arrcid = (ArrayIdentToken*)cid;
-        arrOp.setTarget(arrcid);
+        arrOp_access.setTarget(arrcid);
 
         auto indices = *((vector<IntIdentToken*>*)$2);
-        if (arrOp.dim() != indices.size())
+        if (arrOp_access.dim() != indices.size())
             yyerror("Incompatible dimension.");
         
         bool allConst = true;
@@ -263,14 +328,14 @@ LVal:   IDENT
                 break;
             }
         
-        int offset = arrOp.getOffset(indices); // The constant part of the indices
+        int offset = arrOp_access.getOffset(indices); // The constant part of the indices
         if (offset == -1)
             yyerror("Index out of bound.");
         
         if (cid->isConst()) {
             if (!allConst)
                 yyerror("Constant expression required for index.");
-            $$ = new IntIdentToken(arrOp[offset]);
+            $$ = new IntIdentToken(arrOp_access[offset]);
         }
         else {
             auto newcid = new IntIdentToken(); // The value
@@ -291,7 +356,7 @@ LVal:   IDENT
 
                     auto tmp = new IntIdentToken(); // The temp var for multiplication
                     out << tmp->Declare() << endl;
-                    idxOffset = arrOp.ndim(i) * 4;
+                    idxOffset = arrOp_access.ndim(i) * 4;
                     out << tmp->getName() << " = " << indices[i]->getName() << " * " << idxOffset << endl;
                     out << idxName << " = " << idxName << " + " << tmp->getName() << endl;
                 }

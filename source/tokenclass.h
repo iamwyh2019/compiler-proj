@@ -78,6 +78,7 @@ public:
 class ArrayIdentToken: public IdentToken {
     vector<int> shape;
     vector<int> vals;
+    vector<IntIdentToken*> tokens;
     int dim;
     friend class ArrayOperator;
 public:
@@ -114,6 +115,7 @@ class ArrayOperator {
 public:
     void setTarget(ArrayIdentToken*);
     bool addOne(int); // For constant array, add one element to values;
+    bool addOne(IntIdentToken*); // For var array, add one token to tokens
     bool moveDown(); // Meet {
     bool moveUp(); // Meet }
     bool jumpOne(); // Meet {}
@@ -123,7 +125,8 @@ public:
     int ndim(int i) const;
     string& name();
 
-    int operator[](int);
+    int operator[](int); // To access value (for constant array)
+    IntIdentToken* operator()(int); // To access member (for var array)
 };
 
 #endif
