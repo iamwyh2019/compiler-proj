@@ -110,14 +110,18 @@ public:
 class ArrayOperator {
     ArrayIdentToken *target;
     int layer, index;
+    string _name;
 public:
     void setTarget(ArrayIdentToken*);
     bool addOne(int); // For constant array, add one element to values;
     bool moveDown(); // Meet {
     bool moveUp(); // Meet }
     bool jumpOne(); // Meet {}
-    int size();
-    string& name(); // Could modify. Danger!
+    int getOffset(vector<IntIdentToken*>&);
+    long unsigned int size() const;
+    long unsigned int dim() const;
+    int ndim(int i) const;
+    string& name();
 
     int operator[](int);
 };

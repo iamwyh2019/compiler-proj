@@ -157,7 +157,7 @@ VarDef: IDENT
             yyerror(errmsg);
         }
 
-        auto cid = new IntIdentToken(*(string*)$1, false); // not const. Initially 0
+        auto cid = new IntIdentToken(name, false); // not const. Initially 0
         nowScope->addToken(cid);
 
         out << cid->Declare() << endl;
@@ -189,6 +189,28 @@ VarDef: IDENT
         }
         nowScope->addToken(cid);
     }
+    | IDENT ArrayDim
+    {
+        auto name = *(string*)$1;
+        auto oldcid = nowScope->findOne(name);
+
+        if (oldcid != nullptr) {
+            string errmsg = "\"";
+            errmsg += name;
+            errmsg += "\" already defined in this scope.";
+            yyerror(errmsg);
+        }
+
+        auto cid = new ArrayIdentToken(name, false); // not const. Initially 0
+        cid->setShape(*(vector<int>*)$2);
+        nowScope->addToken(cid);
+
+        int size = cid->size();
+        string &arrName = cid->getName();
+        out << cid->Declare() << endl;
+        for (int i = 0; i < size; ++i)
+            out << arrName << "[" << i*4 << "] = 0" << endl;
+    }
     ;
 InitVal:    Exp {$$ = $1;}
     ;
@@ -199,9 +221,6 @@ LVal:   IDENT
     {
         auto name = *(string*)$1;
         auto cid = (IdentToken*)nowScope->findAll(name);
-        if (cid->Type() != IntType)
-            yyerror("Need an integer identifier!");
-        cid = (IntIdentToken*)cid;
 
         if (cid == nullptr) {
             string errmsg = "\"";
@@ -210,9 +229,101 @@ LVal:   IDENT
             yyerror(errmsg);
         }
 
+        if (cid->Type() != IntType)
+            yyerror("Int identifier required.");
+        cid = (IntIdentToken*)cid;
+
         $$ = cid;
     }
+    | IDENT ArrayIndices
+    {
+        auto name = *(string*)$1;
+        auto cid = (IdentToken*)nowScope->findAll(name);
+
+        if (cid == nullptr) {
+            string errmsg = "\"";
+            errmsg += name;
+            errmsg += "\" undefined in this scope.";
+            yyerror(errmsg);
+        }
+
+        if (cid->Type() != ArrayType)
+            yyerror("Array identifier required.");
+        auto arrcid = (ArrayIdentToken*)cid;
+        arrOp.setTarget(arrcid);
+
+        auto indices = *((vector<IntIdentToken*>*)$2);
+        if (arrOp.dim() != indices.size())
+            yyerror("Incompatible dimension.");
+        
+        bool allConst = true;
+        for (auto &ele: indices)
+            if (!ele->isConst()) {
+                allConst = false;
+                break;
+            }
+        
+        int offset = arrOp.getOffset(indices); // The constant part of the indices
+        if (offset == -1)
+            yyerror("Index out of bound.");
+        
+        if (cid->isConst()) {
+            if (!allConst)
+                yyerror("Constant expression required for index.");
+            $$ = new IntIdentToken(arrOp[offset]);
+        }
+        else {
+            auto newcid = new IntIdentToken(); // The value
+            out << newcid->Declare() << endl;
+
+            if (allConst) {
+                out << newcid->getName() << " = " << cid->getName() << "[" << offset*INTSIZE << "]" << endl;
+            }
+            else {
+                auto idxVar = new IntIdentToken(); // The int token for the index
+                out << idxVar->Declare() << endl;
+                out << idxVar->getName() << " = " << offset*INTSIZE << endl;
+                string &idxName = idxVar->getName();
+
+                int idxOffset, dims = indices.size();
+                for (int i = 0; i < dims; ++i) {
+                    if (indices[i]->isConst()) continue;
+
+                    auto tmp = new IntIdentToken(); // The temp var for multiplication
+                    out << tmp->Declare() << endl;
+                    idxOffset = arrOp.ndim(i) * 4;
+                    out << tmp->getName() << " = " << indices[i]->getName() << " * " << idxOffset << endl;
+                    out << idxName << " = " << idxName << " + " << tmp->getName() << endl;
+                }
+                out << newcid->getName() << " = " << cid->getName() << "[" << idxVar->getName() << "]" << endl;
+            }
+
+            $$ = newcid;
+        }
+    }
     ;
+
+ArrayIndices:   ArrayIndex
+    {
+        auto indices = new vector<IntIdentToken*>();
+        indices->push_back((IntIdentToken*)$1);
+        $$ = indices;
+    }
+    | ArrayIndices ArrayIndex
+    {
+        $$ = $1;
+        ((vector<IntIdentToken*>*)$$)->push_back((IntIdentToken*)$2);
+    }
+    ;
+
+ArrayIndex: LBRAC Exp RBRAC
+    {
+        auto cid = (IdentToken*)$2;
+        if (cid->Type() != IntType)
+            yyerror("Integer index required.");
+        $$ = cid;        
+    }
+
 PrimaryExp: LPAREN Exp RPAREN {$$ = $2;}
     | LVal {$$ = $1;}
     | NUMBER { $$ = new IntIdentToken(V($1));}

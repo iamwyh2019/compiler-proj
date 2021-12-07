@@ -135,6 +135,7 @@ void Scope::addToken(IdentToken *tok) {
 void ArrayOperator::setTarget(ArrayIdentToken *tgt) {
     target = tgt;
     layer = 0; index = 0;
+    _name = tgt->getName();
 }
 
 bool ArrayOperator::addOne(int v) {
@@ -163,13 +164,35 @@ bool ArrayOperator::jumpOne() {
 }
 
 string& ArrayOperator::name() {
-    return target->getName();
+    return _name;
 }
 
-int ArrayOperator::size() {
+long unsigned int ArrayOperator::size() const {
     return target->size();
+}
+
+long unsigned int ArrayOperator::dim() const {
+    return target->dim;
+}
+
+int ArrayOperator::ndim(int i) const {
+    return target->shape[i+1];
 }
 
 int ArrayOperator::operator[](int i) {
     return target->vals[i];
+}
+
+int ArrayOperator::getOffset(vector<IntIdentToken*> &indices) {
+    int offset = 0, nowidx, avaidx;
+    for (int i = 0; i < target->dim; ++i) {
+        if (!indices[i]->isConst())
+            continue;
+        nowidx = indices[i]->Val();
+        avaidx = target->shape[i] / target->shape[i+1];
+        if (nowidx >= avaidx)
+            return -1;
+        offset += nowidx * target->shape[i+1];
+    }
+    return offset;
 }
