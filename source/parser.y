@@ -332,10 +332,8 @@ LVal:   IDENT
         if (offset == -1)
             yyerror("Index out of bound.");
         
-        if (cid->isConst()) {
-            if (!allConst)
-                yyerror("Constant expression required for index.");
-            $$ = new IntIdentToken(arrOp_access[offset]);
+        if (cid->isConst() && allConst) {
+            $$ = new IntIdentToken(arrOp_access[offset]); // Accessing a constant value
         }
         else {
             auto newcid = new IntIdentToken(); // The value

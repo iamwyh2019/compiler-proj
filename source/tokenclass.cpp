@@ -1,8 +1,5 @@
 #include "tokenclass.h"
 
-#include <iostream>
-using namespace std;
-
 const string emptyString = "";
 
 extern const int INTSIZE;
