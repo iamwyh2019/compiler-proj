@@ -45,7 +45,10 @@ ostream &out = cout;
 
 %%
 CompUnit:   Decl
-    | CompUnit Decl;
+    | CompUnit Decl
+    | FuncDef
+    | CompUnit FuncDef
+    ;
 Decl:       ConstDecl
     | VarDecl
     ;
@@ -278,6 +281,63 @@ VarArrVals: VarArrVals COMMA VarArrVal
     ;
 
 InitVal:    Exp {$$ = $1;}
+    ;
+
+FuncDef:    INT IDENT LPAREN
+    {
+        auto name = *(string*)$2;
+        auto oldcid = nowScope->findOne(name);
+
+        if (oldcid != nullptr) {
+            string errmsg = "\"";
+            errmsg += name;
+            errmsg += "\" already defined in this scope.";
+            yyerror(errmsg);
+        }
+
+        auto cid = new FuncIdentToken(RetInt, name);
+        nowScope->addToken(cid);
+        $$ = cid;
+
+        auto nextScope = new Scope(nowScope);
+        nowScope = nextScope;
+    }
+    FuncFParams RPAREN
+    {
+        auto cid = (FuncIdentToken*)$4;
+        cid->setNParams(V($5));
+        out << cid->Declare() << endl;
+        $$ = cid;
+    }
+    ;
+
+FuncFParams:    FuncFParams COMMA FuncFParam
+    {
+        ++V($1);
+        $$ = $1;
+    }
+    | FuncFParam
+    {
+        $$ = new int(1);
+    }
+    ;
+
+FuncFParam: INT IDENT
+    {
+        auto name = *(string*)$2;
+        auto oldcid = nowScope->findOne(name);
+
+        if (oldcid != nullptr) { // Declared the same param
+            string errmsg = "Parameter \"";
+            errmsg += name;
+            errmsg += "\" already defined.";
+            yyerror(errmsg);
+        }
+
+        auto cid = new IntIdentToken(name, false, false, true);
+        nowScope->addToken(cid);
+        $$ = cid;
+    }
     ;
 
 Exp:    AddExp;

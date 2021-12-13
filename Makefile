@@ -8,8 +8,8 @@ CPPFLAGS := -Wall -Wno-register -std=c++17
 # If PROD (production) undefined then it's 0
 PROD ?= 0
 ifeq ($(PROD), 0)
-CFLAGS += -g -O0
-CPPFLAGS += -g -O0
+CFLAGS += -g -O2
+CPPFLAGS += -g -O2
 else
 CFLAGS += -O2
 CPPFLAGS += -O2

@@ -15,6 +15,12 @@ const int INTSIZE = 4;
 enum TokenType {
     IntType,
     ArrayType,
+    FuncType,
+};
+
+enum RetType {
+    RetVoid,
+    RetInt,
 };
 
 // The general token class
@@ -85,6 +91,17 @@ public:
     ArrayIdentToken(const string&, bool, bool=false, bool=false);
     void setShape(vector<int>&);
     const int size() const;
+    virtual string Declare() const;
+};
+
+// FuncToken
+// Represent functions
+class FuncIdentToken: public IdentToken {
+    RetType ret_type;
+    int n_params;
+public:
+    FuncIdentToken(RetType, string&);
+    void setNParams(int);
     virtual string Declare() const;
 };
 

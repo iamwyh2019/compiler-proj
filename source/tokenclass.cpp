@@ -1,4 +1,6 @@
 #include "tokenclass.h"
+#include <iostream>
+using namespace std;
 
 const string emptyString = "";
 
@@ -96,6 +98,22 @@ const int ArrayIdentToken::size() const {
 
 string ArrayIdentToken::Declare() const {
     return "var " + to_string(shape[0]*INTSIZE) + " " + eeyore_name;
+}
+
+// ============= FuncToken =============
+FuncIdentToken::FuncIdentToken(RetType return_type, string &_name):
+    IdentToken(_name, FuncType, false, false, false, false) {
+        ret_type = return_type;
+        eeyore_name = "f_" + _name;
+        n_params = 0;
+    }
+
+void FuncIdentToken::setNParams(int nparams) {
+    n_params = nparams;
+}
+
+string FuncIdentToken::Declare() const {
+    return eeyore_name + " [" + to_string(n_params) + "]";
 }
 
 // ============= Scope =============
