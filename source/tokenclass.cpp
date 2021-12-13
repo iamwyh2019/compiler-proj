@@ -1,6 +1,4 @@
 #include "tokenclass.h"
-#include <iostream>
-using namespace std;
 
 const string emptyString = "";
 
@@ -81,15 +79,17 @@ ArrayIdentToken::ArrayIdentToken(const string &_name, bool is_const, bool is_tmp
         // Always assign
     }
 
-void ArrayIdentToken::setShape(vector<int> &_shape) {
+void ArrayIdentToken::setShape(deque<int> &_shape) {
     shape = _shape;
     dim = shape.size();
     for (int i = dim-2; i >= 0; --i)
         shape[i] *= shape[i+1];
     shape.push_back(1);
+    // If it is a parameter, don't use it
+    if (is_p) return;
     // If it is a constant, store the values. Otherwise store the reference to its values
-    if (is_c) vals = vector<int>(shape[0], 0);
-    else tokens = vector<IntIdentToken*>(shape[0], nullptr);
+    if (is_c) vals = deque<int>(shape[0], 0);
+    else tokens = deque<IntIdentToken*>(shape[0], nullptr);
 }
 
 const int ArrayIdentToken::size() const {
@@ -212,7 +212,7 @@ IntIdentToken* ArrayOperator::operator()(int i) {
     return target->tokens[i];
 }
 
-int ArrayOperator::getOffset(vector<IntIdentToken*> &indices) {
+int ArrayOperator::getOffset(deque<IntIdentToken*> &indices) {
     int offset = 0, nowidx, avaidx;
     for (int i = 0; i < target->dim; ++i) {
         if (!indices[i]->isConst())

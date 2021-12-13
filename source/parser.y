@@ -87,7 +87,7 @@ ConstDef:   IDENT ASSIGN ConstInitVal
         }
 
         auto cid = new ArrayIdentToken(name, true); // const
-        cid->setShape(*(vector<int>*)$2);
+        cid->setShape(*(deque<int>*)$2);
         nowScope->addToken(cid);
 
         out << cid->Declare() << endl;
@@ -132,12 +132,12 @@ ConstArrayVals: ConstArrayVals COMMA ConstArrayVal
 ArrayDim:   ArrayDim LBRAC ConstExp RBRAC
     {
         $$ = $1;
-        ((vector<int>*)$$)->push_back(V($3));
+        ((deque<int>*)$$)->push_back(V($3));
     }
     | LBRAC ConstExp RBRAC
     {
-        $$ = new vector<int>;
-        ((vector<int>*)$$)->push_back(V($2));
+        $$ = new deque<int>;
+        ((deque<int>*)$$)->push_back(V($2));
     }
     ;
 
@@ -207,7 +207,7 @@ VarDef: IDENT
         }
 
         auto cid = new ArrayIdentToken(name, false); // not const. Initially 0
-        cid->setShape(*(vector<int>*)$2);
+        cid->setShape(*(deque<int>*)$2);
         nowScope->addToken(cid);
 
         int size = cid->size();
@@ -229,7 +229,7 @@ VarDef: IDENT
         }
 
         auto cid = new ArrayIdentToken(name, false); // not const. Initially 0
-        cid->setShape(*(vector<int>*)$2);
+        cid->setShape(*(deque<int>*)$2);
         nowScope->addToken(cid);
 
         out << cid->Declare() << endl;
@@ -338,6 +338,45 @@ FuncFParam: INT IDENT
         nowScope->addToken(cid);
         $$ = cid;
     }
+    | INT IDENT LBRAC RBRAC
+    {
+        auto name = *(string*)$2;
+        auto oldcid = nowScope->findOne(name);
+
+        if (oldcid != nullptr) { // Declared the same param
+            string errmsg = "Parameter \"";
+            errmsg += name;
+            errmsg += "\" already defined.";
+            yyerror(errmsg);
+        }
+
+        auto cid = new ArrayIdentToken(name, false, false, true);
+        deque<int> shape(1,-1);
+        cid->setShape(shape);
+
+        nowScope->addToken(cid);
+        $$ = cid;
+    }
+    | INT IDENT LBRAC RBRAC ArrayDim
+    {
+        auto name = *(string*)$2;
+        auto oldcid = nowScope->findOne(name);
+
+        if (oldcid != nullptr) { // Declared the same param
+            string errmsg = "Parameter \"";
+            errmsg += name;
+            errmsg += "\" already defined.";
+            yyerror(errmsg);
+        }
+
+        auto cid = new ArrayIdentToken(name, false, false, true);
+        auto shape = *(deque<int>*)$5;
+        shape.push_front(-1);
+        cid->setShape(shape);
+
+        nowScope->addToken(cid);
+        $$ = cid;
+    }
     ;
 
 Exp:    AddExp;
@@ -377,7 +416,7 @@ LVal:   IDENT
         auto arrcid = (ArrayIdentToken*)cid;
         arrOp_access.setTarget(arrcid);
 
-        auto indices = *((vector<IntIdentToken*>*)$2);
+        auto indices = *((deque<IntIdentToken*>*)$2);
         if (arrOp_access.dim() != indices.size())
             yyerror("Incompatible dimension.");
         
@@ -428,14 +467,14 @@ LVal:   IDENT
 
 ArrayIndices:   ArrayIndex
     {
-        auto indices = new vector<IntIdentToken*>();
+        auto indices = new deque<IntIdentToken*>();
         indices->push_back((IntIdentToken*)$1);
         $$ = indices;
     }
     | ArrayIndices ArrayIndex
     {
         $$ = $1;
-        ((vector<IntIdentToken*>*)$$)->push_back((IntIdentToken*)$2);
+        ((deque<IntIdentToken*>*)$$)->push_back((IntIdentToken*)$2);
     }
     ;
 

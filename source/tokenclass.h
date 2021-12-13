@@ -4,11 +4,13 @@
 #include <iostream>
 #include <string>
 #include <map>
-#include <vector>
+#include <deque>
+#include <queue>
 using std::string;
 using std::to_string;
 using std::map;
-using std::vector;
+using std::deque;
+using std::deque;
 
 const int INTSIZE = 4;
 
@@ -82,14 +84,14 @@ public:
 // vals: flatten the array into an one-dim array
 // dim: dimension
 class ArrayIdentToken: public IdentToken {
-    vector<int> shape;
-    vector<int> vals;
-    vector<IntIdentToken*> tokens;
+    deque<int> shape;
+    deque<int> vals;
+    deque<IntIdentToken*> tokens;
     int dim;
     friend class ArrayOperator;
 public:
     ArrayIdentToken(const string&, bool, bool=false, bool=false);
-    void setShape(vector<int>&);
+    void setShape(deque<int>&);
     const int size() const;
     virtual string Declare() const;
 };
@@ -136,7 +138,7 @@ public:
     bool moveDown(); // Meet {
     bool moveUp(); // Meet }
     bool jumpOne(); // Meet {}
-    int getOffset(vector<IntIdentToken*>&);
+    int getOffset(deque<IntIdentToken*>&);
     long unsigned int size() const;
     long unsigned int dim() const;
     int ndim(int i) const;
