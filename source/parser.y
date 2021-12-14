@@ -314,6 +314,7 @@ FuncDef:    INT IDENT LPAREN
         auto faScope = nowScope->Parent();
         delete nowScope;
         nowScope = faScope;
+        out << "end " << ((FuncIdentToken*)$4)->getName() << endl;
     }
     ;
 
@@ -459,10 +460,11 @@ LVal:   IDENT
         arrOp_access.setTarget(arrcid);
 
         auto indices = *((deque<IntIdentToken*>*)$2);
-        if (arrOp_access.dim() != indices.size())
-            yyerror("Incompatible dimension.");
+        if (arrOp_access.dim() < indices.size())
+            yyerror("Dimension overflow.");
         
         bool allConst = true;
+        bool downToEle = (arrOp_access.dim() == indices.size());
         for (auto &ele: indices)
             if (!ele->isConst()) {
                 allConst = false;
@@ -473,7 +475,7 @@ LVal:   IDENT
         if (offset == -1)
             yyerror("Index out of bound.");
         
-        if (cid->isConst() && allConst) {
+        if (cid->isConst() && allConst && downToEle) {
             $$ = new IntIdentToken(arrOp_access[offset]); // Accessing a constant value
         }
         else {
@@ -528,12 +530,115 @@ ArrayIndex: LBRAC Exp RBRAC
         $$ = cid;        
     }
 
+FuncRParams:    FuncRParams COMMA Exp
+    {
+        auto cid = (vector<IdentToken*>*)$1;
+        cid->push_back((IdentToken*)$3);
+        $$ = cid;
+    }
+    | Exp
+    {
+        auto cid = new vector<IdentToken*>;
+        cid->push_back((IdentToken*)$1);
+        $$ = cid;
+    }
+    ;
+
 PrimaryExp: LPAREN Exp RPAREN {$$ = $2;}
     | LVal {$$ = $1;}
     | NUMBER { $$ = new IntIdentToken(V($1));}
     ;
 UnaryExp:   PrimaryExp {$$ = $1;}
-    | IDENT LPAREN [FuncParams] RPAREN
+    | IDENT LPAREN FuncRParams RPAREN
+    {
+        auto name = *(string*)$1;
+        auto cid = (IdentToken*)nowScope->findAll(name);
+
+        if (cid == nullptr) {
+            string errmsg = "\"";
+            errmsg += name;
+            errmsg += "\" undefined in this scope.";
+            yyerror(errmsg);
+        }
+
+        if (cid->Type() != FuncType) {
+            string errmsg = "\"";
+            errmsg += name;
+            errmsg += "\" is not a function.";
+            yyerror(errmsg);
+        }
+
+        auto func = (FuncIdentToken*)cid;
+        auto params = *(vector<IdentToken*>*)$3;
+        int nparam = params.size();
+
+        if (func->nParams() != nparam){
+            string errmsg = to_string(func->nParams());
+            errmsg += " params expected, but ";
+            errmsg += to_string(nparam);
+            errmsg += " get.";
+            yyerror(errmsg);
+        }
+
+        for (int i = 0; i < nparam; ++i) {
+            auto param = params[i];
+            out << "param " << param->getName() << endl;
+        }
+
+        if (func->retType() == RetInt) {
+            auto cc = new IntIdentToken();
+            out << cc->Declare() << endl;
+            out << cc->getName() << " = call " << func->getName() << endl;
+            $$ = cc;
+        }
+        else if (func->retType() == RetVoid) {
+            out << "call " << func->getName() << endl;
+            $$ = new VoidToken();
+        }
+        else {
+            yyerror("Unknown return type.");
+        }
+    }
+    | IDENT LPAREN RPAREN
+    {
+        auto name = *(string*)$1;
+        auto cid = (IdentToken*)nowScope->findAll(name);
+
+        if (cid == nullptr) {
+            string errmsg = "\"";
+            errmsg += name;
+            errmsg += "\" undefined in this scope.";
+            yyerror(errmsg);
+        }
+
+        if (cid->Type() != FuncType) {
+            string errmsg = "\"";
+            errmsg += name;
+            errmsg += "\" is not a function.";
+            yyerror(errmsg);
+        }
+
+        auto func = (FuncIdentToken*)cid;
+        if (func->nParams() != 0){
+            string errmsg = to_string(func->nParams());
+            errmsg += " params expected, but 0 get.";
+            yyerror(errmsg);
+        }
+
+        if (func->retType() == RetInt) {
+            auto cc = new IntIdentToken();
+            out << cc->Declare() << endl;
+            out << cc->getName() << " = call " << func->getName() << endl;
+            $$ = cc;
+        }
+        else if (func->retType() == RetVoid) {
+            out << "call " << func->getName() << endl;
+            $$ = new VoidToken();
+        }
+        else {
+            yyerror("Unknown return type.");
+        }
+    }
     | ADD UnaryExp {$$ = $2;}
     | SUB UnaryExp
     {

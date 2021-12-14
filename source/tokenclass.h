@@ -18,6 +18,7 @@ enum TokenType {
     IntType,
     ArrayType,
     FuncType,
+    VoidType,
 };
 
 enum RetType {
@@ -66,6 +67,14 @@ public:
     bool operator||(const IdentToken&b) const;
 };
 
+// Void Token
+// Just to represent the result of a void function
+class VoidToken: public IdentToken {
+public:
+    VoidToken();
+    virtual string Declare() const;
+};
+
 // IntIdentToken, has TokenType int
 // val: the value of the token
 class IntIdentToken: public IdentToken {
@@ -104,7 +113,9 @@ class FuncIdentToken: public IdentToken {
 public:
     FuncIdentToken(RetType, string&);
     void setNParams(int);
+    int nParams() const;
     virtual string Declare() const;
+    RetType retType() const;
 };
 
 // Scope

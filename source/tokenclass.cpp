@@ -10,6 +10,14 @@ Token::Token(TokenType tp) {
 }
 TokenType Token::Type() const {return type;}
 
+// ============= VoidToken =============
+VoidToken::VoidToken():
+    IdentToken(emptyString, VoidType, false, false, false, false) {}
+
+string VoidToken::Declare() const {
+    return emptyString;
+}
+
 // ============= IdentToken =============
 int IdentToken::count = 0;
 IdentToken::IdentToken(const string &_name, TokenType tp, bool should_assign,
@@ -114,6 +122,14 @@ void FuncIdentToken::setNParams(int nparams) {
 
 string FuncIdentToken::Declare() const {
     return eeyore_name + " [" + to_string(n_params) + "]";
+}
+
+RetType FuncIdentToken::retType() const {
+    return ret_type;
+}
+
+int FuncIdentToken::nParams() const {
+    return n_params;
 }
 
 // ============= Scope =============
@@ -224,13 +240,13 @@ IntIdentToken* ArrayOperator::operator()(int i) {
 }
 
 int ArrayOperator::getOffset(deque<IntIdentToken*> &indices) {
-    int offset = 0, nowidx, avaidx;
-    for (int i = 0; i < target->dim; ++i) {
+    int offset = 0, nowidx, avaidx, nidx = indices.size();
+    for (int i = 0; i < nidx; ++i) {
         if (!indices[i]->isConst())
             continue;
         nowidx = indices[i]->Val();
         avaidx = target->shape[i] / target->shape[i+1];
-        if (nowidx >= avaidx)
+        if (avaidx >= 0 && nowidx >= avaidx)
             return -1;
         offset += nowidx * target->shape[i+1];
     }
