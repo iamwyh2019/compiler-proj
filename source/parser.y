@@ -531,11 +531,6 @@ Stmt:   LVal ASSIGN Exp SEMI
         if (nowFunc->retType() != RetInt)
             yyerror("This function does not return int.");
         auto cid = (IntIdentToken*)$2;
-        if (cid->isSlice()) {
-            auto newcid = new IntIdentToken();
-            out << newcid->getName() << " = " << cid->getName() << endl;
-            cid = newcid;
-        }
         out << "return " << cid->getName() << endl;
     }
     ;
@@ -663,7 +658,16 @@ FuncRParams:    FuncRParams COMMA Exp
     ;
 
 PrimaryExp: LPAREN Exp RPAREN {$$ = $2;}
-    | LVal {$$ = $1;}
+    | LVal
+    {
+        auto cid = (IntIdentToken*)$1;
+        if (cid->isSlice()) {
+            auto newcid = new IntIdentToken();
+            out << newcid->getName() << " = " << cid->getName() << endl;
+            cid = newcid;
+        }
+        $$ = cid;
+    }
     | NUMBER { $$ = new IntIdentToken(V($1));}
     ;
 UnaryExp:   PrimaryExp {$$ = $1;}
