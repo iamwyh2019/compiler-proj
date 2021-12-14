@@ -116,9 +116,10 @@ public:
 class Scope {
     map<string, IdentToken*> scope;
     Scope *parent;
-    IdentToken* find(string&, bool) const;
+protected:
+    bool is_p;
 public:
-    Scope(Scope *fa=nullptr);
+    Scope(Scope *fa=nullptr, bool=false);
     ~Scope();
     IdentToken* findOne(string&) const;
     IdentToken* findAll(string&) const;

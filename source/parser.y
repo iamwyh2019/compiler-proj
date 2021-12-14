@@ -299,7 +299,7 @@ FuncDef:    INT IDENT LPAREN
         nowScope->addToken(cid);
         $$ = cid;
 
-        auto nextScope = new Scope(nowScope);
+        auto nextScope = new Scope(nowScope, true); // is a parameter scope
         nowScope = nextScope;
     }
     FuncFParams RPAREN
@@ -385,14 +385,41 @@ FuncFParam: INT IDENT
     }
     ;
 
-Block:  LCURLY BlockItems RCURLY
+Block:  LCURLY
+    {
+        auto nextScope = new Scope(nowScope);
+        nowScope = nextScope;
+    }
+    BlockItems RCURLY
+    {
+        auto faScope = nowScope->Parent();
+        delete nowScope;
+        nowScope = faScope;
+    }
     ;
 
 BlockItems: BlockItems BlockItem
     | BlockItem
     ;
 
-BlockItem:  Decl;
+BlockItem:  Decl
+    | Stmt
+    ;
+
+Stmt:   LVal ASSIGN Exp SEMI
+    {
+        auto lval = (IntIdentToken*)$1,
+            rval = (IntIdentToken*)$3;
+
+        if (lval->isConst())
+            yyerror("Cannot assign values to a constant.");
+        
+        out << lval->getName() << " = " << rval->getName() << endl;
+    }
+    | Exp SEMI
+    | SEMI
+    | Block
+    ;
 
 Exp:    AddExp;
 Cond:   LOrExp;

@@ -117,32 +117,39 @@ string FuncIdentToken::Declare() const {
 }
 
 // ============= Scope =============
-Scope::Scope(Scope *fa) {parent = fa;}
+Scope::Scope(Scope *fa, bool is_param) {
+    parent = fa;
+    is_p = is_param;
+}
 
 Scope::~Scope() {
     for (auto iter = scope.begin(); iter != scope.end(); ++iter)
         delete iter->second;
 }
 
-IdentToken* Scope::find(string &id, bool deep) const {
+IdentToken* Scope::findOne(string &id) const {
+    auto iter = scope.find(id);
+    if (iter != scope.end())
+        return iter->second;
+    if (parent != nullptr && parent->is_p) {
+        iter = parent->scope.find(id);
+        if (iter != parent->scope.end())
+            return iter->second;
+    }
+    return nullptr;
+}
+
+IdentToken* Scope::findAll(string &id) const {
     auto now_scope = this;
 
-    do {
+    while (now_scope != nullptr) {
         auto iter = now_scope->scope.find(id);
         if (iter != now_scope->scope.end())
             return iter->second;
         now_scope = now_scope->parent;
-    } while (deep && now_scope != nullptr);
+    }
     
     return nullptr;
-}
-
-IdentToken* Scope::findOne(string &id) const {
-    return find(id, false);
-}
-
-IdentToken* Scope::findAll(string &id) const {
-    return find(id, true);
 }
 
 void Scope::addToken(IdentToken *tok) {
