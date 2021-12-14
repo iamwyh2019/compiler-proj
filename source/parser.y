@@ -189,7 +189,7 @@ VarDef: IDENT
         }
         else { // It's a temporary variable, just use it
             cid = initRes;
-            cid->setName(name);
+            cid->setVarName(name);
             cid->setTmp(false);
         }
         nowScope->addToken(cid);
@@ -565,11 +565,10 @@ LVal:   IDENT
             $$ = new IntIdentToken(arrOp_access[offset]); // Accessing a constant value
         }
         else {
-            auto newcid = new IntIdentToken(); // The value
-            out << newcid->Declare() << endl;
+            IntIdentToken *newcid; // The value
 
             if (allConst) {
-                out << newcid->getName() << " = " << cid->getName() << "[" << offset*INTSIZE << "]" << endl;
+                newcid = new IntIdentToken(cid->getName(), to_string(offset*INTSIZE));
             }
             else {
                 auto idxVar = new IntIdentToken(); // The int token for the index
@@ -587,7 +586,7 @@ LVal:   IDENT
                     out << tmp->getName() << " = " << indices[i]->getName() << " * " << idxOffset << endl;
                     out << idxName << " = " << idxName << " + " << tmp->getName() << endl;
                 }
-                out << newcid->getName() << " = " << cid->getName() << "[" << idxVar->getName() << "]" << endl;
+                newcid = new IntIdentToken(cid->getName(), idxVar->getName());
             }
 
             $$ = newcid;

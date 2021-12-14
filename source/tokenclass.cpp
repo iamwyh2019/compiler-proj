@@ -40,7 +40,8 @@ IdentToken::IdentToken(const string &_name, TokenType tp, bool should_assign,
 IdentToken::~IdentToken(){}
 string& IdentToken::Name() {return name;}
 string& IdentToken::getName() {return eeyore_name;}
-void IdentToken::setName(string &s) {name = s;}
+void IdentToken::setVarName(string &s) {name = s;}
+void IdentToken::setName(string &s) {eeyore_name = s;}
 
 bool IdentToken::isConst() const {return is_c;}
 bool IdentToken::isTmp() const {return is_t;}
@@ -71,6 +72,11 @@ IntIdentToken::IntIdentToken(int v, bool is_tmp, bool is_param):
     }
 IntIdentToken::IntIdentToken(bool is_tmp, bool is_param):
     IdentToken(emptyString, IntType, true, false, is_tmp, is_param) {}
+
+IntIdentToken::IntIdentToken(string &arrName, string index):
+    IdentToken(emptyString, IntType, false, false, false, false) {
+        eeyore_name = arrName + '[' + index + ']';
+    }
 
 int IntIdentToken::Val() const {return val;}
 void IntIdentToken::setVal(int v) {

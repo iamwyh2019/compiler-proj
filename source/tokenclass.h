@@ -26,6 +26,12 @@ enum RetType {
     RetInt,
 };
 
+class Token;
+class IdentToken;
+class IntIdentToken;
+class ArrayIdentToken;
+class FuncIdentToken;
+
 // The general token class
 // Type: token type
 class Token {
@@ -58,7 +64,8 @@ public:
     void setParam(bool); 
     
     string& Name(); // Get the variable name
-    void setName(string&); // set the variable name
+    void setVarName(string&);
+    void setName(string&); // set the eeyore name
     string& getName(); // Get the eeyore name
 
     virtual string Declare() const=0;
@@ -83,6 +90,7 @@ public:
     IntIdentToken(const string&, bool, bool=false, bool=false);
     IntIdentToken(int, bool=false, bool=false); // Constant int in the middle
     IntIdentToken(bool=true, bool=false); // temporary variable in the middle. Don't care about its value.
+    IntIdentToken(string&, string);
     int Val() const;
     void setVal(int);
     virtual string Declare() const;
