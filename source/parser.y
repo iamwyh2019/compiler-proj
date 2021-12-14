@@ -309,6 +309,12 @@ FuncDef:    INT IDENT LPAREN
         out << cid->Declare() << endl;
         $$ = cid;
     }
+    Block
+    {
+        auto faScope = nowScope->Parent();
+        delete nowScope;
+        nowScope = faScope;
+    }
     ;
 
 FuncFParams:    FuncFParams COMMA FuncFParam
@@ -378,6 +384,15 @@ FuncFParam: INT IDENT
         $$ = cid;
     }
     ;
+
+Block:  LCURLY BlockItems RCURLY
+    ;
+
+BlockItems: BlockItems BlockItem
+    | BlockItem
+    ;
+
+BlockItem:  Decl;
 
 Exp:    AddExp;
 Cond:   LOrExp;

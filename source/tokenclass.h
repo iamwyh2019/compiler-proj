@@ -115,14 +115,15 @@ public:
 // addToken: add a token to this scope. WILL NOT add to parent scope
 class Scope {
     map<string, IdentToken*> scope;
-    const Scope *parent;
+    Scope *parent;
     IdentToken* find(string&, bool) const;
 public:
-    Scope(const Scope *fa=nullptr);
+    Scope(Scope *fa=nullptr);
     ~Scope();
     IdentToken* findOne(string&) const;
     IdentToken* findAll(string&) const;
     void addToken(IdentToken*);
+    Scope* Parent() const;
 };
 
 

@@ -117,7 +117,7 @@ string FuncIdentToken::Declare() const {
 }
 
 // ============= Scope =============
-Scope::Scope(const Scope *fa) {parent = fa;}
+Scope::Scope(Scope *fa) {parent = fa;}
 
 Scope::~Scope() {
     for (auto iter = scope.begin(); iter != scope.end(); ++iter)
@@ -128,8 +128,8 @@ IdentToken* Scope::find(string &id, bool deep) const {
     auto now_scope = this;
 
     do {
-        auto iter = this->scope.find(id);
-        if (iter != this->scope.end())
+        auto iter = now_scope->scope.find(id);
+        if (iter != now_scope->scope.end())
             return iter->second;
         now_scope = now_scope->parent;
     } while (deep && now_scope != nullptr);
@@ -147,6 +147,10 @@ IdentToken* Scope::findAll(string &id) const {
 
 void Scope::addToken(IdentToken *tok) {
     scope[tok->Name()] = tok;
+}
+
+Scope* Scope::Parent() const {
+    return parent;
 }
 
 
