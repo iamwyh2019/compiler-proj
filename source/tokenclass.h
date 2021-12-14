@@ -86,6 +86,7 @@ public:
 // val: the value of the token
 class IntIdentToken: public IdentToken {
     int val;
+    bool is_slice;
 public:
     IntIdentToken(const string&, bool, bool=false, bool=false);
     IntIdentToken(int, bool=false, bool=false); // Constant int in the middle
@@ -94,6 +95,7 @@ public:
     int Val() const;
     void setVal(int);
     virtual string Declare() const;
+    bool isSlice() const;
 };
 
 // ArrayIdentToken, has TokenType array

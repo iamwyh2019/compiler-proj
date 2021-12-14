@@ -62,19 +62,22 @@ IntIdentToken::IntIdentToken(const string &_name, bool is_const, bool is_tmp, bo
     IdentToken(_name, IntType, !is_const, is_const, is_tmp, is_param) {
         // If it is a const, don't assign
         val = 0;
+        is_slice = false;
         if (is_c) eeyore_name = to_string(val);
     }
 IntIdentToken::IntIdentToken(int v, bool is_tmp, bool is_param):
     IdentToken(emptyString, IntType, false, true, is_tmp, is_param) {
         // This is a const. Don't assign.
         val = v;
+        is_slice = false;
         if (is_c) eeyore_name = to_string(val);
     }
 IntIdentToken::IntIdentToken(bool is_tmp, bool is_param):
-    IdentToken(emptyString, IntType, true, false, is_tmp, is_param) {}
+    IdentToken(emptyString, IntType, true, false, is_tmp, is_param) {is_slice = false;}
 
 IntIdentToken::IntIdentToken(string &arrName, string index):
     IdentToken(emptyString, IntType, false, false, false, false) {
+        is_slice = true;
         eeyore_name = arrName + '[' + index + ']';
     }
 
@@ -85,6 +88,9 @@ void IntIdentToken::setVal(int v) {
 }
 string IntIdentToken::Declare() const {
     return "var " + eeyore_name;
+}
+bool IntIdentToken::isSlice() const {
+    return is_slice;
 }
 
 // ============= ArrayIdentToken =============

@@ -31,6 +31,8 @@ auto arrOp_access = ArrayOperator();
 // Currently print to the screen. Will change to files.
 ostream &out = cout;
 
+FuncIdentToken *nowFunc = nullptr;
+
 %}
 
 %token ADD SUB MUL DIV MOD
@@ -303,6 +305,7 @@ FuncDef:    INT IDENT LPAREN
 
         auto cid = new FuncIdentToken(RetInt, name);
         nowScope->addToken(cid);
+        nowFunc = cid;
         $$ = cid;
 
         auto nextScope = new Scope(nowScope, true); // is a parameter scope. Inspired by Zhenbang You
@@ -322,6 +325,7 @@ FuncDef:    INT IDENT LPAREN
         nowScope = faScope;
         out << "return 0" << endl;
         out << "end " << ((FuncIdentToken*)$4)->getName() << endl;
+        nowFunc = nullptr;
     }
     | INT IDENT LPAREN RPAREN
     {
@@ -338,12 +342,14 @@ FuncDef:    INT IDENT LPAREN
         auto cid = new FuncIdentToken(RetInt, name);
         out << cid->Declare() << endl;
         nowScope->addToken(cid);
+        nowFunc = cid;
         $$ = cid;
     }
     Block
     {
         out << "return 0" << endl;
         out << "end " << ((FuncIdentToken*)$5)->getName() << endl;
+        nowFunc = nullptr;
     }
     | VOID IDENT LPAREN
     {
@@ -359,9 +365,10 @@ FuncDef:    INT IDENT LPAREN
 
         auto cid = new FuncIdentToken(RetVoid, name);
         nowScope->addToken(cid);
+        nowFunc = cid;
         $$ = cid;
 
-        auto nextScope = new Scope(nowScope, true); // is a parameter scope
+        auto nextScope = new Scope(nowScope, true); // is a parameter scope. Inspired by Zhenbang You
         nowScope = nextScope;
     }
     FuncFParams RPAREN
@@ -378,6 +385,7 @@ FuncDef:    INT IDENT LPAREN
         nowScope = faScope;
         out << "return" << endl;
         out << "end " << ((FuncIdentToken*)$4)->getName() << endl;
+        nowFunc = nullptr;
     }
     | VOID IDENT LPAREN RPAREN
     {
@@ -394,12 +402,14 @@ FuncDef:    INT IDENT LPAREN
         auto cid = new FuncIdentToken(RetVoid, name);
         out << cid->Declare() << endl;
         nowScope->addToken(cid);
+        nowFunc = cid;
         $$ = cid;
     }
     Block
     {
         out << "return" << endl;
         out << "end " << ((FuncIdentToken*)$5)->getName() << endl;
+        nowFunc = nullptr;
     }
     ;
 
@@ -506,6 +516,28 @@ Stmt:   LVal ASSIGN Exp SEMI
     | Exp SEMI
     | SEMI
     | Block
+    | RETURN SEMI
+    {
+        if (nowFunc == nullptr)
+            yyerror("Not in a function.");
+        if (nowFunc->retType() != RetVoid)
+            yyerror("This function does not return void.");
+        out << "return" << endl;
+    }
+    | RETURN Exp SEMI
+    {
+        if (nowFunc == nullptr)
+            yyerror("Not in a function.");
+        if (nowFunc->retType() != RetInt)
+            yyerror("This function does not return int.");
+        auto cid = (IntIdentToken*)$2;
+        if (cid->isSlice()) {
+            auto newcid = new IntIdentToken();
+            out << newcid->getName() << " = " << cid->getName() << endl;
+            cid = newcid;
+        }
+        out << "return " << cid->getName() << endl;
+    }
     ;
 
 Exp:    AddExp;
