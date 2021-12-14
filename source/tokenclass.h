@@ -135,6 +135,7 @@ public:
 class Scope {
     map<string, IdentToken*> scope;
     Scope *parent;
+    // Inspired by Zhenbang You
     bool is_p;
 public:
     Scope(Scope *fa=nullptr, bool=false);

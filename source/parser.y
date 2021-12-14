@@ -305,7 +305,7 @@ FuncDef:    INT IDENT LPAREN
         nowScope->addToken(cid);
         $$ = cid;
 
-        auto nextScope = new Scope(nowScope, true); // is a parameter scope
+        auto nextScope = new Scope(nowScope, true); // is a parameter scope. Inspired by Zhenbang You
         nowScope = nextScope;
     }
     FuncFParams RPAREN
