@@ -139,8 +139,9 @@ Scope::Scope(Scope *fa, bool is_param) {
 }
 
 Scope::~Scope() {
-    for (auto iter = scope.begin(); iter != scope.end(); ++iter)
+    for (auto iter = scope.begin(); iter != scope.end(); ++iter) {
         delete iter->second;
+    }
 }
 
 IdentToken* Scope::findOne(string &id) const {

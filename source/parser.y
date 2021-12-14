@@ -185,7 +185,7 @@ VarDef: IDENT
         if (!initRes->isTmp()) { // It's either a constant or a declared variable, need to declare a new one
             cid = new IntIdentToken(name, false); // not const
             out << cid->Declare() << endl;
-            out << cid->getName() << "=" << initRes->getName() << endl;
+            out << cid->getName() << " = " << initRes->getName() << endl;
         }
         else { // It's a temporary variable, just use it
             cid = initRes;
@@ -280,7 +280,13 @@ VarArrVals: VarArrVals COMMA VarArrVal
     | VarArrVal
     ;
 
-InitVal:    Exp {$$ = $1;}
+InitVal:    Exp
+    {
+        auto cid = (IdentToken*)$1;
+        if (cid->Type() != IntType)
+            yyerror("Integer initial value required.");
+        $$ = cid;
+    }
     ;
 
 FuncDef:    INT IDENT LPAREN
@@ -314,7 +320,86 @@ FuncDef:    INT IDENT LPAREN
         auto faScope = nowScope->Parent();
         delete nowScope;
         nowScope = faScope;
+        out << "return 0" << endl;
         out << "end " << ((FuncIdentToken*)$4)->getName() << endl;
+    }
+    | INT IDENT LPAREN RPAREN
+    {
+        auto name = *(string*)$2;
+        auto oldcid = nowScope->findOne(name);
+
+        if (oldcid != nullptr) {
+            string errmsg = "\"";
+            errmsg += name;
+            errmsg += "\" already defined in this scope.";
+            yyerror(errmsg);
+        }
+
+        auto cid = new FuncIdentToken(RetInt, name);
+        out << cid->Declare() << endl;
+        nowScope->addToken(cid);
+        $$ = cid;
+    }
+    Block
+    {
+        out << "return 0" << endl;
+        out << "end " << ((FuncIdentToken*)$5)->getName() << endl;
+    }
+    | VOID IDENT LPAREN
+    {
+        auto name = *(string*)$2;
+        auto oldcid = nowScope->findOne(name);
+
+        if (oldcid != nullptr) {
+            string errmsg = "\"";
+            errmsg += name;
+            errmsg += "\" already defined in this scope.";
+            yyerror(errmsg);
+        }
+
+        auto cid = new FuncIdentToken(RetVoid, name);
+        nowScope->addToken(cid);
+        $$ = cid;
+
+        auto nextScope = new Scope(nowScope, true); // is a parameter scope
+        nowScope = nextScope;
+    }
+    FuncFParams RPAREN
+    {
+        auto cid = (FuncIdentToken*)$4;
+        cid->setNParams(V($5));
+        out << cid->Declare() << endl;
+        $$ = cid;
+    }
+    Block
+    {
+        auto faScope = nowScope->Parent();
+        delete nowScope;
+        nowScope = faScope;
+        out << "return" << endl;
+        out << "end " << ((FuncIdentToken*)$4)->getName() << endl;
+    }
+    | VOID IDENT LPAREN RPAREN
+    {
+        auto name = *(string*)$2;
+        auto oldcid = nowScope->findOne(name);
+
+        if (oldcid != nullptr) {
+            string errmsg = "\"";
+            errmsg += name;
+            errmsg += "\" already defined in this scope.";
+            yyerror(errmsg);
+        }
+
+        auto cid = new FuncIdentToken(RetVoid, name);
+        out << cid->Declare() << endl;
+        nowScope->addToken(cid);
+        $$ = cid;
+    }
+    Block
+    {
+        out << "return" << endl;
+        out << "end " << ((FuncIdentToken*)$5)->getName() << endl;
     }
     ;
 
@@ -397,6 +482,7 @@ Block:  LCURLY
         delete nowScope;
         nowScope = faScope;
     }
+    | LCURLY RCURLY
     ;
 
 BlockItems: BlockItems BlockItem
@@ -529,6 +615,7 @@ ArrayIndex: LBRAC Exp RBRAC
             yyerror("Integer index required.");
         $$ = cid;        
     }
+    ;
 
 FuncRParams:    FuncRParams COMMA Exp
     {

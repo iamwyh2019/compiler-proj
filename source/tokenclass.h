@@ -127,7 +127,6 @@ public:
 class Scope {
     map<string, IdentToken*> scope;
     Scope *parent;
-protected:
     bool is_p;
 public:
     Scope(Scope *fa=nullptr, bool=false);

@@ -35,6 +35,7 @@ break   {charNum += yyleng; return BREAK;}
 while   {charNum += yyleng; return WHILE;}
 return  {charNum += yyleng; return RETURN;}
 int     {charNum += yyleng; return INT;}
+void    {charNum += yyleng; return VOID;}
 const   {charNum += yyleng; return CONST;}
 "+"     {++charNum; return ADD;}
 "-"     {++charNum; return SUB;}
