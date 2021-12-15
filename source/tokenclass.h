@@ -6,10 +6,12 @@
 #include <map>
 #include <deque>
 #include <queue>
+using std::cout;
+using std::endl;
 using std::string;
 using std::to_string;
 using std::map;
-using std::deque;
+using std::vector;
 using std::deque;
 
 const int INTSIZE = 4;
@@ -169,6 +171,28 @@ public:
 
     int operator[](int); // To access value (for constant array)
     IntIdentToken* operator()(int); // To access member (for var array)
+};
+
+// Parser
+// stores declaration and statements
+// controls indentation
+// and also generates labels
+
+class Parser {
+    vector<string> decls;
+    vector<string> stmts;
+    vector<int> indents;
+    int label, indent;
+public:
+    Parser();
+    void addDecl(IdentToken*);
+    void addDecl(const string&);
+    void addStmt(IdentToken*);
+    void addStmt(const string&);
+    void addIndent();
+    void removeIndent();
+    string nextTag();
+    void parse();
 };
 
 #endif

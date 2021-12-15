@@ -28,10 +28,9 @@ Scope *nowScope = &globalScope;
 auto arrOp_assign = ArrayOperator();
 auto arrOp_access = ArrayOperator();
 
-// Currently print to the screen. Will change to files.
-ostream &out = cout;
-
 FuncIdentToken *nowFunc = nullptr;
+
+auto parser = Parser();
 
 %}
 
@@ -92,7 +91,7 @@ ConstDef:   IDENT ASSIGN ConstInitVal
         cid->setShape(*(deque<int>*)$2);
         nowScope->addToken(cid);
 
-        out << cid->Declare() << endl;
+        parser.addDecl(cid);
 
         arrOp_assign.setTarget(cid);
     }
@@ -101,7 +100,8 @@ ConstDef:   IDENT ASSIGN ConstInitVal
         string &arrName = arrOp_assign.name();
         int n = arrOp_assign.size();
         for (int i = 0; i < n; ++i)
-            out << arrName << "[" << i*INTSIZE << "] = " << arrOp_assign[i] << endl;
+            parser.addStmt(arrName + '[' + to_string(i*INTSIZE) 
+                            + "] = " + to_string(arrOp_assign[i]));
     }
     ;
 
@@ -166,8 +166,8 @@ VarDef: IDENT
         auto cid = new IntIdentToken(name, false); // not const. Initially 0
         nowScope->addToken(cid);
 
-        out << cid->Declare() << endl;
-        out << cid->getName() << " = 0" << endl;
+        parser.addDecl(cid);
+        parser.addStmt(cid->getName() + " = 0");
     }
     | IDENT ASSIGN InitVal
     {
@@ -186,8 +186,8 @@ VarDef: IDENT
 
         if (!initRes->isTmp()) { // It's either a constant or a declared variable, need to declare a new one
             cid = new IntIdentToken(name, false); // not const
-            out << cid->Declare() << endl;
-            out << cid->getName() << " = " << initRes->getName() << endl;
+            parser.addDecl(cid);
+            parser.addStmt(cid->getName() + " = " + initRes->getName());
         }
         else { // It's a temporary variable, just use it
             cid = initRes;
@@ -214,9 +214,10 @@ VarDef: IDENT
 
         int size = cid->size();
         string &arrName = cid->getName();
-        out << cid->Declare() << endl;
+
+        parser.addDecl(cid);
         for (int i = 0; i < size; ++i)
-            out << arrName << "[" << i*4 << "] = 0" << endl;
+            parser.addStmt(arrName + "[" + to_string(i*4) + "] = 0");
     }
     | IDENT ArrayDim
     {
@@ -234,7 +235,7 @@ VarDef: IDENT
         cid->setShape(*(deque<int>*)$2);
         nowScope->addToken(cid);
 
-        out << cid->Declare() << endl;
+        parser.addDecl(cid);
 
         arrOp_assign.setTarget(cid);
     }
@@ -244,14 +245,14 @@ VarDef: IDENT
         int n = arrOp_assign.size();
         for (int i = 0; i < n; ++i) {
             auto ele = arrOp_assign(i);
-            out << arrName << "[" << i*4 << "] = ";
+            string stmt = arrName + "[" + to_string(i*4) + "] = ";
 
             if (ele == nullptr)
-                out << 0 << endl;
-            else if (ele->isConst())
-                out << ele->Val() << endl;
+                stmt += "0";
             else
-                out << ele->getName() << endl;
+                stmt += ele->getName();
+            
+            parser.addStmt(stmt);
         }
     }
     ;
@@ -315,7 +316,9 @@ FuncDef:    INT IDENT LPAREN
     {
         auto cid = (FuncIdentToken*)$4;
         cid->setNParams(V($5));
-        out << cid->Declare() << endl;
+        // Function declaration is deemed as a statement
+        parser.addStmt(cid);
+        parser.addIndent();
         $$ = cid;
     }
     Block
@@ -323,8 +326,9 @@ FuncDef:    INT IDENT LPAREN
         auto faScope = nowScope->Parent();
         delete nowScope;
         nowScope = faScope;
-        out << "return 0" << endl;
-        out << "end " << ((FuncIdentToken*)$4)->getName() << endl;
+        parser.addStmt("return 0");
+        parser.removeIndent();
+        parser.addStmt("end " + ((FuncIdentToken*)$4)->getName());
         nowFunc = nullptr;
     }
     | INT IDENT LPAREN RPAREN
@@ -340,15 +344,17 @@ FuncDef:    INT IDENT LPAREN
         }
 
         auto cid = new FuncIdentToken(RetInt, name);
-        out << cid->Declare() << endl;
+        parser.addStmt(cid);
+        parser.addIndent();
         nowScope->addToken(cid);
         nowFunc = cid;
         $$ = cid;
     }
     Block
     {
-        out << "return 0" << endl;
-        out << "end " << ((FuncIdentToken*)$5)->getName() << endl;
+        parser.addStmt("return 0");
+        parser.removeIndent();
+        parser.addStmt("end " + ((FuncIdentToken*)$5)->getName());
         nowFunc = nullptr;
     }
     | VOID IDENT LPAREN
@@ -375,7 +381,8 @@ FuncDef:    INT IDENT LPAREN
     {
         auto cid = (FuncIdentToken*)$4;
         cid->setNParams(V($5));
-        out << cid->Declare() << endl;
+        parser.addStmt(cid);
+        parser.addIndent();
         $$ = cid;
     }
     Block
@@ -383,8 +390,9 @@ FuncDef:    INT IDENT LPAREN
         auto faScope = nowScope->Parent();
         delete nowScope;
         nowScope = faScope;
-        out << "return" << endl;
-        out << "end " << ((FuncIdentToken*)$4)->getName() << endl;
+        parser.addStmt("return");
+        parser.removeIndent();
+        parser.addStmt("end " + ((FuncIdentToken*)$4)->getName());
         nowFunc = nullptr;
     }
     | VOID IDENT LPAREN RPAREN
@@ -400,15 +408,17 @@ FuncDef:    INT IDENT LPAREN
         }
 
         auto cid = new FuncIdentToken(RetVoid, name);
-        out << cid->Declare() << endl;
+        parser.addStmt(cid);
+        parser.addIndent();
         nowScope->addToken(cid);
         nowFunc = cid;
         $$ = cid;
     }
     Block
     {
-        out << "return" << endl;
-        out << "end " << ((FuncIdentToken*)$5)->getName() << endl;
+        parser.addStmt("return");
+        parser.removeIndent();
+        parser.addStmt("end " + ((FuncIdentToken*)$5)->getName());
         nowFunc = nullptr;
     }
     ;
@@ -511,7 +521,7 @@ Stmt:   LVal ASSIGN Exp SEMI
         if (lval->isConst())
             yyerror("Cannot assign values to a constant.");
         
-        out << lval->getName() << " = " << rval->getName() << endl;
+        parser.addStmt(lval->getName() + " = " + rval->getName());
     }
     | Exp SEMI
     | SEMI
@@ -522,7 +532,7 @@ Stmt:   LVal ASSIGN Exp SEMI
             yyerror("Not in a function.");
         if (nowFunc->retType() != RetVoid)
             yyerror("This function does not return void.");
-        out << "return" << endl;
+        parser.addStmt("return");
     }
     | RETURN Exp SEMI
     {
@@ -531,7 +541,7 @@ Stmt:   LVal ASSIGN Exp SEMI
         if (nowFunc->retType() != RetInt)
             yyerror("This function does not return int.");
         auto cid = (IntIdentToken*)$2;
-        out << "return " << cid->getName() << endl;
+        parser.addStmt("return " + cid->getName());
     }
     ;
 
@@ -599,8 +609,8 @@ LVal:   IDENT
             }
             else {
                 auto idxVar = new IntIdentToken(); // The int token for the index
-                out << idxVar->Declare() << endl;
-                out << idxVar->getName() << " = " << offset*INTSIZE << endl;
+                parser.addDecl(idxVar);
+                parser.addStmt(idxVar->getName() + " = " + to_string(offset*INTSIZE));
                 string &idxName = idxVar->getName();
 
                 int idxOffset, dims = indices.size();
@@ -608,10 +618,10 @@ LVal:   IDENT
                     if (indices[i]->isConst()) continue;
 
                     auto tmp = new IntIdentToken(); // The temp var for multiplication
-                    out << tmp->Declare() << endl;
+                    parser.addDecl(tmp);
                     idxOffset = arrOp_access.ndim(i) * 4;
-                    out << tmp->getName() << " = " << indices[i]->getName() << " * " << idxOffset << endl;
-                    out << idxName << " = " << idxName << " + " << tmp->getName() << endl;
+                    parser.addStmt(tmp->getName() + " = " + indices[i]->getName() + " * " + to_string(idxOffset));
+                    parser.addStmt(idxName + " = " + idxName + " + " + tmp->getName());
                 }
                 newcid = new IntIdentToken(cid->getName(), idxVar->getName());
             }
@@ -663,7 +673,7 @@ PrimaryExp: LPAREN Exp RPAREN {$$ = $2;}
         auto cid = (IntIdentToken*)$1;
         if (cid->isSlice()) {
             auto newcid = new IntIdentToken();
-            out << newcid->getName() << " = " << cid->getName() << endl;
+            parser.addStmt(newcid->getName() + " = " + cid->getName());
             cid = newcid;
         }
         $$ = cid;
@@ -704,17 +714,17 @@ UnaryExp:   PrimaryExp {$$ = $1;}
 
         for (int i = 0; i < nparam; ++i) {
             auto param = params[i];
-            out << "param " << param->getName() << endl;
+            parser.addStmt("param " + param->getName());
         }
 
         if (func->retType() == RetInt) {
             auto cc = new IntIdentToken();
-            out << cc->Declare() << endl;
-            out << cc->getName() << " = call " << func->getName() << endl;
+            parser.addDecl(cc);
+            parser.addStmt(cc->getName() + " = call " + func->getName());
             $$ = cc;
         }
         else if (func->retType() == RetVoid) {
-            out << "call " << func->getName() << endl;
+            parser.addStmt("call " + func->getName());
             $$ = new VoidToken();
         }
         else {
@@ -749,12 +759,12 @@ UnaryExp:   PrimaryExp {$$ = $1;}
 
         if (func->retType() == RetInt) {
             auto cc = new IntIdentToken();
-            out << cc->Declare() << endl;
-            out << cc->getName() << " = call " << func->getName() << endl;
+            parser.addDecl(cc);
+            parser.addStmt(cc->getName() + " = call " + func->getName());
             $$ = cc;
         }
         else if (func->retType() == RetVoid) {
-            out << "call " << func->getName() << endl;
+            parser.addStmt("call " + func->getName());
             $$ = new VoidToken();
         }
         else {
@@ -769,8 +779,8 @@ UnaryExp:   PrimaryExp {$$ = $1;}
             $$ = new IntIdentToken(-cid->Val());
         else {
             auto newcid = new IntIdentToken();
-            out << newcid->Declare() << endl;
-            out << newcid->getName() << " = -" << cid->getName() << endl;
+            parser.addDecl(newcid);
+            parser.addStmt(newcid->getName() + " = -" + cid->getName());
             $$ = newcid;
         }
     }
@@ -781,8 +791,8 @@ UnaryExp:   PrimaryExp {$$ = $1;}
             $$ = new IntIdentToken(!cid->Val());
         else {
             auto newcid = new IntIdentToken(); // A temporary var
-            out << newcid->Declare() << endl;
-            out << newcid->getName() << " = !" << cid->getName() << endl;
+            parser.addDecl(newcid);
+            parser.addStmt(newcid->getName() + " = !" + cid->getName());
             $$ = newcid;
         }
     }
@@ -798,8 +808,8 @@ MulExp:     UnaryExp {$$ = $1;}
         }
         else {
             auto newcid = new IntIdentToken(); // A tmp var
-            out << newcid->Declare() << endl;
-            out << newcid->getName() << " = " << c1->getName() << " * " << c2->getName() << endl;
+            parser.addDecl(newcid);
+            parser.addStmt(newcid->getName() + " = " + c1->getName() + " * " + c2->getName());
             $$ = newcid;
         }
     }
@@ -813,8 +823,8 @@ MulExp:     UnaryExp {$$ = $1;}
         }
         else {
             auto newcid = new IntIdentToken(); // A tmp var
-            out << newcid->Declare() << endl;
-            out << newcid->getName() << " = " << c1->getName() << " / " << c2->getName() << endl;
+            parser.addDecl(newcid);
+            parser.addStmt(newcid->getName() + " = " + c1->getName() + " / " + c2->getName());
             $$ = newcid;
         }
     }
@@ -828,8 +838,8 @@ MulExp:     UnaryExp {$$ = $1;}
         }
         else {
             auto newcid = new IntIdentToken();
-            out << newcid->Declare() << endl;
-            out << newcid->getName() << " = " << c1->getName() << " % " << c2->getName() << endl;
+            parser.addDecl(newcid);
+            parser.addStmt(newcid->getName() + " = " + c1->getName() + " % " + c2->getName());
             $$ = newcid;
         }
     }
@@ -843,8 +853,8 @@ AddExp:     MulExp {$$ = $1;}
         }
         else {
             auto newcid = new IntIdentToken();
-            out << newcid->Declare() << endl;
-            out << newcid->getName() << " = " << c1->getName() << " + " << c2->getName() << endl;
+            parser.addDecl(newcid);
+            parser.addStmt(newcid->getName() + " = " + c1->getName() + " + " + c2->getName());
             $$ = newcid;
         }
     }
@@ -856,8 +866,8 @@ AddExp:     MulExp {$$ = $1;}
         }
         else {
             auto newcid = new IntIdentToken();
-            out << newcid->Declare() << endl;
-            out << newcid->getName() << " = " << c1->getName() << " - " << c2->getName() << endl;
+            parser.addDecl(newcid);
+            parser.addStmt(newcid->getName() + " = " + c1->getName() + " - " + c2->getName());
             $$ = newcid;
         }
     }
@@ -900,7 +910,7 @@ void yyerror(const string &s) {
 }
 
 int main() {
-    ios::sync_with_stdio(false);
     yyparse();
+    parser.parse();
     return 0;
 }

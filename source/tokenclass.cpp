@@ -104,7 +104,7 @@ void ArrayIdentToken::setShape(deque<int> &_shape) {
     dim = shape.size();
     for (int i = dim-2; i >= 0; --i)
         shape[i] *= shape[i+1];
-    shape.push_back(1);
+    shape.emplace_back(1);
     // If it is a parameter, don't use it
     if (is_p) return;
     // If it is a constant, store the values. Otherwise store the reference to its values
@@ -264,4 +264,53 @@ int ArrayOperator::getOffset(deque<IntIdentToken*> &indices) {
         offset += nowidx * target->shape[i+1];
     }
     return offset;
+}
+
+// ============= Parser =============
+Parser::Parser() {
+    label = 0;
+    indent = 0;
+}
+
+void Parser::addDecl(const string &decl) {
+    decls.emplace_back(decl);
+}
+
+void Parser::addDecl(IdentToken *cid) {
+    // Declarations are never indented
+    addDecl(cid->Declare());
+}
+
+void Parser::addStmt(const string &stmt) {
+    stmts.emplace_back(stmt);
+    indents.emplace_back(indent);
+}
+
+void Parser::addStmt(IdentToken *cid) {
+    addStmt(cid->Declare());
+}
+
+string Parser::nextTag() {
+    return "l" + to_string(label++);
+}
+
+void Parser::addIndent() {
+    ++indent;
+}
+
+void Parser::removeIndent() {
+    --indent;
+}
+
+void Parser::parse() {
+    for (auto &decl: decls) {
+        cout << decl << endl;
+    }
+
+    int nstmts = stmts.size();
+    for (int i = 0; i < nstmts; ++i) {
+        for (int j = 0; j < indents[i]; ++j)
+            cout << "\t";
+        cout << stmts[i] << endl;
+    }
 }
