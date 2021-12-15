@@ -281,6 +281,8 @@ void Parser::addDecl(IdentToken *cid) {
     addDecl(cid->Declare());
 }
 
+// ex_indent: extra indentation
+// used for special indented statements, such as return
 void Parser::addStmt(const string &stmt, int ex_indent) {
     stmts.emplace_back(stmt);
     indents.emplace_back(indent + ex_indent);
