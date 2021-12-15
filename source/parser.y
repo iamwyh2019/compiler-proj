@@ -318,7 +318,6 @@ FuncDef:    INT IDENT LPAREN
         cid->setNParams(V($5));
         // Function declaration is deemed as a statement
         parser.addStmt(cid);
-        parser.addIndent();
         $$ = cid;
     }
     Block
@@ -326,8 +325,7 @@ FuncDef:    INT IDENT LPAREN
         auto faScope = nowScope->Parent();
         delete nowScope;
         nowScope = faScope;
-        parser.addStmt("return 0");
-        parser.removeIndent();
+        parser.addStmt("return 0",1);
         parser.addStmt("end " + ((FuncIdentToken*)$4)->getName());
         nowFunc = nullptr;
     }
@@ -345,15 +343,13 @@ FuncDef:    INT IDENT LPAREN
 
         auto cid = new FuncIdentToken(RetInt, name);
         parser.addStmt(cid);
-        parser.addIndent();
         nowScope->addToken(cid);
         nowFunc = cid;
         $$ = cid;
     }
     Block
     {
-        parser.addStmt("return 0");
-        parser.removeIndent();
+        parser.addStmt("return 0",1);
         parser.addStmt("end " + ((FuncIdentToken*)$5)->getName());
         nowFunc = nullptr;
     }
@@ -382,7 +378,6 @@ FuncDef:    INT IDENT LPAREN
         auto cid = (FuncIdentToken*)$4;
         cid->setNParams(V($5));
         parser.addStmt(cid);
-        parser.addIndent();
         $$ = cid;
     }
     Block
@@ -390,8 +385,7 @@ FuncDef:    INT IDENT LPAREN
         auto faScope = nowScope->Parent();
         delete nowScope;
         nowScope = faScope;
-        parser.addStmt("return");
-        parser.removeIndent();
+        parser.addStmt("return",1);
         parser.addStmt("end " + ((FuncIdentToken*)$4)->getName());
         nowFunc = nullptr;
     }
@@ -409,15 +403,13 @@ FuncDef:    INT IDENT LPAREN
 
         auto cid = new FuncIdentToken(RetVoid, name);
         parser.addStmt(cid);
-        parser.addIndent();
         nowScope->addToken(cid);
         nowFunc = cid;
         $$ = cid;
     }
     Block
     {
-        parser.addStmt("return");
-        parser.removeIndent();
+        parser.addStmt("return",1);
         parser.addStmt("end " + ((FuncIdentToken*)$5)->getName());
         nowFunc = nullptr;
     }
@@ -495,12 +487,14 @@ Block:  LCURLY
     {
         auto nextScope = new Scope(nowScope);
         nowScope = nextScope;
+        parser.addIndent();
     }
     BlockItems RCURLY
     {
         auto faScope = nowScope->Parent();
         delete nowScope;
         nowScope = faScope;
+        parser.removeIndent();
     }
     | LCURLY RCURLY
     ;

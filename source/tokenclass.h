@@ -179,19 +179,21 @@ public:
 // and also generates labels
 
 class Parser {
-    vector<string> decls;
-    vector<string> stmts;
-    vector<int> indents;
-    int label, indent;
+    vector<string> decls; // Declarations
+    vector<string> stmts; // Statements
+    vector<int> indents; // Each statement's indentation level. Initially 0
+    int label, indent; // Track the label number and indentation
+                        // I have thought about making label a static variable
+                        // But who will declare two parsers?
 public:
     Parser();
-    void addDecl(IdentToken*);
-    void addDecl(const string&);
-    void addStmt(IdentToken*);
-    void addStmt(const string&);
-    void addIndent();
-    void removeIndent();
-    string nextTag();
+    void addDecl(IdentToken*); // same as addDecl(cid->Declare())
+    void addDecl(const string&); // Add a declaration
+    void addStmt(IdentToken*, int=0); // same as addStmt(cid->Declare())
+    void addStmt(const string&, int=0); // Add a statement. Will maintain its indentation
+    void addIndent(); // Add one indentation level ("\t")
+    void removeIndent(); // Remove one indentation level
+    string nextTag(); 
     void parse();
 };
 

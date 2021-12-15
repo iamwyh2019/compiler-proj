@@ -281,13 +281,13 @@ void Parser::addDecl(IdentToken *cid) {
     addDecl(cid->Declare());
 }
 
-void Parser::addStmt(const string &stmt) {
+void Parser::addStmt(const string &stmt, int ex_indent) {
     stmts.emplace_back(stmt);
-    indents.emplace_back(indent);
+    indents.emplace_back(indent + ex_indent);
 }
 
-void Parser::addStmt(IdentToken *cid) {
-    addStmt(cid->Declare());
+void Parser::addStmt(IdentToken *cid, int ex_indent) {
+    addStmt(cid->Declare(), ex_indent);
 }
 
 string Parser::nextTag() {
