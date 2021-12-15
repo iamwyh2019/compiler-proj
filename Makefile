@@ -52,3 +52,12 @@ $(YACC_OUT): $(SOURCE_DIR)/parser.y
 
 clean:
 	rm -f $(BUILD_DIR)/*
+
+# For testing
+TEST_DIR = $(NOW_DIR)/test
+TEST_IN = $(TEST_DIR)/test.in
+TEST_OUT = $(TEST_DIR)/test.out
+
+.PHONY: test
+test: $(TARGET_DIR) $(TEST_IN)
+	$(TARGET_DIR) < $(TEST_IN) > $(TEST_OUT)

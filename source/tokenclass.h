@@ -52,7 +52,7 @@ class IdentToken: public Token {
 protected:
     bool is_c, is_p, is_t, s_assign;
     string name, eeyore_name;
-    static int count;
+    static int global_count, param_count;
     int num;
 public:
     IdentToken(const string&, TokenType, bool, bool=false, bool=false, bool=false);

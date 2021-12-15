@@ -19,7 +19,8 @@ string VoidToken::Declare() const {
 }
 
 // ============= IdentToken =============
-int IdentToken::count = 0;
+int IdentToken::global_count = 0;
+int IdentToken::param_count = 0;
 IdentToken::IdentToken(const string &_name, TokenType tp, bool should_assign,
                         bool is_const, bool is_tmp, bool is_param):
     Token(tp) {
@@ -30,11 +31,10 @@ IdentToken::IdentToken(const string &_name, TokenType tp, bool should_assign,
         s_assign = should_assign;
 
         if (s_assign) {
-            num = count++;
             if (is_param)
-                eeyore_name = "p" + to_string(num);
+                eeyore_name = "p" + to_string(param_count++);
             else
-                eeyore_name = "T" + to_string(num);
+                eeyore_name = "T" + to_string(global_count++);
         }
     }
 IdentToken::~IdentToken(){}
