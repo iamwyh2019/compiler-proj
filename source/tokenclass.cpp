@@ -116,7 +116,6 @@ void ArrayIdentToken::setShape(deque<int> &_shape) {
     if (is_p) return;
     // If it is a constant, store the values. Otherwise store the reference to its values
     if (is_c) vals = deque<int>(shape[0], 0);
-    else tokens = deque<IntIdentToken*>(shape[0], nullptr);
 }
 
 const int ArrayIdentToken::size() const {
@@ -227,7 +226,7 @@ bool ArrayOperator::addOne(int v) {
 
 bool ArrayOperator::addOne(IntIdentToken *v) {
     if (index >= target->shape[0]) return false;
-    target->tokens[index++] = v;
+    target->tokens.emplace_back(make_pair(index++, v));
     return true;
 }
 
@@ -270,9 +269,15 @@ int ArrayOperator::operator[](int i) {
     return target->vals[i];
 }
 
-IntIdentToken* ArrayOperator::operator()(int i) {
+pair<int, IntIdentToken*>& ArrayOperator::operator()(int i) {
     return target->tokens[i];
 }
+
+int ArrayOperator::nTokens() const {
+    return target->tokens.size();
+}
+
+
 
 int ArrayOperator::getOffset(deque<IntIdentToken*> &indices) {
     int offset = 0, nowidx, avaidx, nidx = indices.size();
@@ -399,8 +404,24 @@ void Parser::removeIndent() {
 }
 
 void Parser::parse() {
+    string dec, sub, arrName;
+    int tot, pos;
     for (auto &decl: decls) {
-        cout << decl << endl;
+        if (decl[0] == '@') {
+            cout << decl.substr(1) << endl;
+            //"@var 24 T0"
+            // Decode into arr length and name
+            dec = decl.substr(5);
+            pos = dec.find(' ');
+            sub = dec.substr(0, pos);
+            arrName = dec.substr(pos+1);
+
+            tot = stoi(sub, 0, 10);
+            for (int i = 0; i < tot; i += 4)
+                cout << arrName << "[" << i << "] = 0" << endl;
+        }
+        else
+            cout << decl << endl;
     }
 
     int nstmts = stmts.size();

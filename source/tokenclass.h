@@ -10,10 +10,13 @@ using std::cout;
 using std::endl;
 using std::string;
 using std::to_string;
+using std::stoi;
 using std::map;
 using std::vector;
 using std::deque;
 using std::stack;
+using std::pair;
+using std::make_pair;
 
 const int INTSIZE = 4;
 
@@ -121,7 +124,7 @@ public:
 class ArrayIdentToken: public IdentToken {
     deque<int> shape;
     deque<int> vals;
-    deque<IntIdentToken*> tokens;
+    deque<pair<int,IntIdentToken*>> tokens;
     int dim;
     friend class ArrayOperator;
 public:
@@ -192,9 +195,10 @@ public:
     long unsigned int dim() const;
     int ndim(int i) const;
     string& name();
+    int nTokens() const;
 
     int operator[](int); // To access value (for constant array)
-    IntIdentToken* operator()(int); // To access member (for var array)
+    pair<int, IntIdentToken*>& operator()(int);
 };
 
 class JumpLabelGroup {

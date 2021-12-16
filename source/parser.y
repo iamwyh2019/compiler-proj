@@ -214,12 +214,7 @@ VarDef: IDENT
         cid->setShape(*(deque<int>*)$2);
         nowScope->addToken(cid);
 
-        int size = cid->size();
-        string &arrName = cid->getName();
-
-        parser.addDecl(cid);
-        for (int i = 0; i < size; ++i)
-            parser.addStmt(arrName + "[" + to_string(i*4) + "] = 0");
+        parser.addDecl(cid->Declare());
     }
     | IDENT ArrayDim
     {
@@ -237,23 +232,18 @@ VarDef: IDENT
         cid->setShape(*(deque<int>*)$2);
         nowScope->addToken(cid);
 
-        parser.addDecl(cid);
+        parser.addDecl("@" + cid->Declare());
 
         arrOp_assign.setTarget(cid);
     }
     ASSIGN VarArrVal
     {
         string &arrName = arrOp_assign.name();
-        int n = arrOp_assign.size();
-        for (int i = 0; i < n; ++i) {
-            auto ele = arrOp_assign(i);
-            string stmt = arrName + "[" + to_string(i*4) + "] = ";
 
-            if (ele == nullptr)
-                stmt += "0";
-            else
-                stmt += ele->getName();
-            
+        int ntokens = arrOp_assign.nTokens();
+        for (int i = 0; i < ntokens; ++i) {
+            auto &p = arrOp_assign(i);
+            string stmt = arrName + "[" + to_string(p.first*4) + "] = " + p.second->getName();
             parser.addStmt(stmt);
         }
     }
@@ -1106,6 +1096,7 @@ void yyerror(const string &s) {
 }
 
 int main(int argc, char **argv) {
+    ios::sync_with_stdio(false);
     if (argc >= 4)
         if ((yyin = fopen(argv[3], "r")) == NULL)
             yyerror("Cannot open input file.");
