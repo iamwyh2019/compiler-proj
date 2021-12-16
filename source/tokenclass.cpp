@@ -57,6 +57,10 @@ bool IdentToken::operator||(const IdentToken &b) const {
     return is_t | b.is_t;
 }
 
+void IdentToken::resetParamCount() {
+    param_count = 0;
+}
+
 // ============= IntIdentToken =============
 IntIdentToken::IntIdentToken(const string &_name, bool is_const, bool is_tmp, bool is_param):
     IdentToken(_name, IntType, !is_const, is_const, is_tmp, is_param) {

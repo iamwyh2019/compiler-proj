@@ -60,4 +60,4 @@ TEST_OUT = $(TEST_DIR)/test.out
 
 .PHONY: test
 test: $(TARGET_DIR) $(TEST_IN)
-	$(TARGET_DIR) < $(TEST_IN) > $(TEST_OUT)
+	$(TARGET_DIR) -S -e $(TEST_IN) -o $(TEST_OUT)

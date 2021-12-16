@@ -80,6 +80,8 @@ public:
 
     bool operator&&(const IdentToken&b) const;
     bool operator||(const IdentToken&b) const;
+
+    static void resetParamCount();
 };
 
 // Void Token

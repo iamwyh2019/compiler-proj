@@ -330,6 +330,7 @@ FuncDef:    INT IDENT LPAREN
         parser.addStmt("return 0",1);
         parser.addStmt("end " + ((FuncIdentToken*)$4)->getName());
         nowFunc = nullptr;
+        IdentToken::resetParamCount();
     }
     | INT IDENT LPAREN RPAREN
     {
@@ -354,6 +355,7 @@ FuncDef:    INT IDENT LPAREN
         parser.addStmt("return 0",1);
         parser.addStmt("end " + ((FuncIdentToken*)$5)->getName());
         nowFunc = nullptr;
+        IdentToken::resetParamCount();
     }
     | VOID IDENT LPAREN
     {
@@ -390,6 +392,7 @@ FuncDef:    INT IDENT LPAREN
         parser.addStmt("return",1);
         parser.addStmt("end " + ((FuncIdentToken*)$4)->getName());
         nowFunc = nullptr;
+        IdentToken::resetParamCount();
     }
     | VOID IDENT LPAREN RPAREN
     {
@@ -414,6 +417,7 @@ FuncDef:    INT IDENT LPAREN
         parser.addStmt("return",1);
         parser.addStmt("end " + ((FuncIdentToken*)$5)->getName());
         nowFunc = nullptr;
+        IdentToken::resetParamCount();
     }
     ;
 
