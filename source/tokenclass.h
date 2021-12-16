@@ -21,6 +21,7 @@ enum TokenType {
     ArrayType,
     FuncType,
     VoidType,
+    BoolType,
 };
 
 enum RetType {
@@ -117,7 +118,7 @@ public:
     virtual string Declare() const;
 };
 
-// FuncToken
+// FuncIdentToken
 // Represent functions
 class FuncIdentToken: public IdentToken {
     RetType ret_type;
@@ -128,6 +129,16 @@ public:
     int nParams() const;
     virtual string Declare() const;
     RetType retType() const;
+};
+
+// CondIdentToken, represent boolean expression
+// the "eeyore_name" is its eeyore_name
+// and "name" is its expression
+class BoolIdentToken: public IdentToken {
+public:
+    BoolIdentToken(const string&, bool=true);
+    virtual string Declare() const;
+    const string getExp();
 };
 
 // Scope

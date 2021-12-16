@@ -144,6 +144,21 @@ int FuncIdentToken::nParams() const {
     return n_params;
 }
 
+// ============= CondIdentToken =============
+BoolIdentToken::BoolIdentToken(const string &exp, bool should_assign):
+    IdentToken(exp, BoolType, should_assign, false, false, false) {
+        if (!should_assign)
+            eeyore_name = exp;
+    }
+
+string BoolIdentToken::Declare() const {
+    return "var " + eeyore_name;
+}
+
+const string BoolIdentToken::getExp(){
+    return eeyore_name + " = " + name;
+}
+
 // ============= Scope =============
 Scope::Scope(Scope *fa, bool is_param) {
     parent = fa;

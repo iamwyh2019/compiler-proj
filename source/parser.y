@@ -537,6 +537,20 @@ Stmt:   LVal ASSIGN Exp SEMI
         auto cid = (IntIdentToken*)$2;
         parser.addStmt("return " + cid->getName());
     }
+    | IF LPAREN Cond RPAREN
+    {
+        // "if" with no else
+        // generate a "skip" tag. If the condition does not hold, jump to skip
+        auto cid = (BoolIdentToken*)$3;
+        string skipTag = parser.nextTag();
+        parser.addStmt("if " + cid->getName() + "==0 goto " + skipTag);
+        $$ = &skipTag;
+    }
+    Stmt
+    {
+        auto skipTag = *(string*)$5;
+        parser.addStmt(skipTag + ":");
+    }
     ;
 
 Exp:    AddExp;
@@ -866,21 +880,74 @@ AddExp:     MulExp {$$ = $1;}
         }
     }
     ;
-RelExp:     AddExp {$$ = $1;}
-    | RelExp LE AddExp {$$ = new bool(V($1)<V($3));}
-    | RelExp GE AddExp {$$ = new bool(V($1)>V($3));}
-    | RelExp LEQ AddExp {$$ = new bool(V($1)<=V($3));}
-    | RelExp GEQ AddExp {$$ = new bool(V($1)>=V($3));}
+RelExp:     AddExp
+    {
+        auto exp = (IdentToken*)$1;
+        auto cid = new BoolIdentToken(exp->getName(), false);
+        $$ = cid;
+    }
+    | RelExp LE AddExp
+    {
+        auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
+        auto cid = new BoolIdentToken(c1->getName() + " < " + c2->getName());
+        parser.addStmt(cid->getExp());
+        $$ = cid;
+    }
+    | RelExp GE AddExp
+    {
+        auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
+        auto cid = new BoolIdentToken(c1->getName() + " > " + c2->getName());
+        parser.addStmt(cid->getExp());
+        $$ = cid;
+    }
+    | RelExp LEQ AddExp
+    {
+        auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
+        auto cid = new BoolIdentToken(c1->getName() + " <= " + c2->getName());
+        parser.addStmt(cid->getExp());
+        $$ = cid;
+    }
+    | RelExp GEQ AddExp
+    {
+        auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
+        auto cid = new BoolIdentToken(c1->getName() + " >= " + c2->getName());
+        parser.addStmt(cid->getExp());
+        $$ = cid;
+    }
     ;
 EqExp:      RelExp {$$ = $1;}
-    | EqExp EQ RelExp {$$ = new bool(V($1)==V($3));}
-    | EqExp NEQ RelExp {$$ = new bool(V($1)!=V($3));}
+    | EqExp EQ RelExp
+    {
+        auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
+        auto cid = new BoolIdentToken(c1->getName() + " == " + c2->getName());
+        parser.addStmt(cid->getExp());
+        $$ = cid;
+    }
+    | EqExp NEQ RelExp
+    {
+        auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
+        auto cid = new BoolIdentToken(c1->getName() + " != " + c2->getName());
+        parser.addStmt(cid->getExp());
+        $$ = cid;
+    }
     ;
 LAndExp:    EqExp {$$ = $1;}
-    | LAndExp AND EqExp {$$ = new bool(V($1)&&V($3));}
+    | LAndExp AND EqExp
+    {
+        auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
+        auto cid = new BoolIdentToken(c1->getName() + " && " + c2->getName());
+        parser.addStmt(cid->getExp());
+        $$ = cid;
+    }
     ;
 LOrExp:     LAndExp {$$ = $1;}
-    | LOrExp OR LAndExp {$$ = new bool(V($1)||V($3));}
+    | LOrExp OR LAndExp
+    {
+        auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
+        auto cid = new BoolIdentToken(c1->getName() + " || " + c2->getName());
+        parser.addStmt(cid->getExp());
+        $$ = cid;
+    }
     ;
 ConstExp:   AddExp
     {
