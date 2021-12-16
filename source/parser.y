@@ -539,17 +539,28 @@ Stmt:   LVal ASSIGN Exp SEMI
     }
     | IF LPAREN Cond RPAREN
     {
-        // "if" with no else
-        // generate a "skip" tag. If the condition does not hold, jump to skip
+        // generate 
         auto cid = (BoolIdentToken*)$3;
-        string skipTag = parser.nextTag();
-        parser.addStmt("if " + cid->getName() + "==0 goto " + skipTag);
-        $$ = &skipTag;
+        auto ifstmt = parser.newIf();
+        parser.addStmt("if " + cid->getName() + "==0 goto " + ifstmt->elseTag);
+    }
+    Stmt DanglingElse
+    ;
+
+DanglingElse:   ELSE
+    {
+        auto thisif = parser.lastIf();
+        parser.addStmt("goto " + thisif->endTag, 1);
+        parser.addStmt(thisif->elseTag + ":");
     }
     Stmt
     {
-        auto skipTag = *(string*)$5;
-        parser.addStmt(skipTag + ":");
+        auto thisif = parser.lastIf(true); // pop this IfStmt
+        parser.addStmt(thisif->endTag + ":");
+    }
+    | {
+        auto thisif = parser.lastIf(true);
+        parser.addStmt(thisif->elseTag + ":");
     }
     ;
 

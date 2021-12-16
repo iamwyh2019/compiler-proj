@@ -4,7 +4,7 @@
 #include <iostream>
 #include <string>
 #include <map>
-#include <deque>
+#include <stack>
 #include <queue>
 using std::cout;
 using std::endl;
@@ -13,6 +13,7 @@ using std::to_string;
 using std::map;
 using std::vector;
 using std::deque;
+using std::stack;
 
 const int INTSIZE = 4;
 
@@ -34,6 +35,10 @@ class IdentToken;
 class IntIdentToken;
 class ArrayIdentToken;
 class FuncIdentToken;
+class BoolIdentToken;
+class Scope;
+class ArrayOperator;
+class Parser;
 
 // The general token class
 // Type: token type
@@ -184,6 +189,18 @@ public:
     IntIdentToken* operator()(int); // To access member (for var array)
 };
 
+// IfStatement
+struct IfStmt {
+    string elseTag; // the tag for "else" stmt
+    string endTag; // the tag for finishing "then" and skipping "else"
+};
+
+// WhileStatement
+struct WhileStmt {
+    string judgeTag; // begin judging 
+    string failTag; // when judge failed
+};
+
 // Parser
 // stores declaration and statements
 // controls indentation
@@ -194,17 +211,24 @@ class Parser {
     vector<string> stmts; // Statements
     vector<int> indents; // Each statement's indentation level. Initially 0
     int label, indent; // Track the label number and indentation
-                        // I have thought about making label a static variable
-                        // But who will declare two parsers?
+    stack<IfStmt*> ifstmts;
+    stack<WhileStmt*> whilestmts; 
 public:
     Parser();
     void addDecl(IdentToken*); // same as addDecl(cid->Declare())
     void addDecl(const string&); // Add a declaration
     void addStmt(IdentToken*, int=0); // same as addStmt(cid->Declare())
     void addStmt(const string&, int=0); // Add a statement. Will maintain its indentation
+
     void addIndent(); // Add one indentation level ("\t")
     void removeIndent(); // Remove one indentation level
-    string nextTag(); 
+
+    string nextTag();
+    IfStmt* newIf();
+    WhileStmt* newWhile();
+    IfStmt* lastIf(bool=false);
+    WhileStmt* lastWhile(bool=false);
+
     void parse();
 };
 

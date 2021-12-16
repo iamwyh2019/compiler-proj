@@ -308,7 +308,40 @@ void Parser::addStmt(IdentToken *cid, int ex_indent) {
 }
 
 string Parser::nextTag() {
-    return "l" + to_string(label++);
+    int num = label++;
+    return "l" + to_string(num);
+}
+
+IfStmt* Parser::newIf() {
+    auto newif = new IfStmt;
+    newif->elseTag = nextTag();
+    newif->endTag = nextTag();
+    ifstmts.emplace(newif);
+    return newif;
+}
+
+IfStmt* Parser::lastIf(bool pop) {
+    if (ifstmts.empty())
+        return nullptr;
+    auto lastif = ifstmts.top();
+    if (pop) ifstmts.pop();
+    return lastif;
+}
+
+WhileStmt* Parser::newWhile() {
+    auto newwhile = new WhileStmt;
+    newwhile->judgeTag = nextTag();
+    newwhile->failTag = nextTag();
+    whilestmts.emplace(newwhile);
+    return newwhile;
+}
+
+WhileStmt* Parser::lastWhile(bool pop) {
+    if (whilestmts.empty())
+        return nullptr;
+    auto lastwhile = whilestmts.top();
+    if (pop) whilestmts.pop();
+    return lastwhile;
 }
 
 void Parser::addIndent() {
