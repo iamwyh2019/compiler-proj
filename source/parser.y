@@ -515,6 +515,10 @@ BlockItem:  Decl
 
 Stmt:   LVal ASSIGN Exp SEMI
     {
+        auto cc = (IdentToken*)$1;
+        if (cc->Type() != IntType)
+            yyerror("Int identifier required.");
+
         auto lval = (IntIdentToken*)$1,
             rval = (IntIdentToken*)$3;
 
@@ -628,10 +632,6 @@ LVal:   IDENT
             yyerror(errmsg);
         }
 
-        if (cid->Type() != IntType)
-            yyerror("Int identifier required.");
-        cid = (IntIdentToken*)cid;
-
         $$ = cid;
     }
     | IDENT ArrayIndices
@@ -739,12 +739,15 @@ FuncRParams:    FuncRParams COMMA Exp
 PrimaryExp: LPAREN Exp RPAREN {$$ = $2;}
     | LVal
     {
-        auto cid = (IntIdentToken*)$1;
-        if (cid->isSlice()) {
-            auto newcid = new IntIdentToken();
-            parser.addDecl(newcid);
-            parser.addStmt(newcid->getName() + " = " + cid->getName());
-            cid = newcid;
+        auto cid = (IdentToken*)$1;
+        if (cid->Type() == IntType) {
+            auto intcid = (IntIdentToken*)cid;
+            if (intcid->isSlice()) {
+                auto newcid = new IntIdentToken();
+                parser.addDecl(newcid);
+                parser.addStmt(newcid->getName() + " = " + cid->getName());
+                cid = newcid;
+            }
         }
         $$ = cid;
     }
@@ -852,10 +855,22 @@ UnaryExp:   PrimaryExp {$$ = $1;}
             }
         }        
     }
-    | ADD UnaryExp {$$ = $2;}
+    | ADD UnaryExp
+    {
+        auto cid = (IdentToken*)$2;
+        if (cid->Type() != IntType)
+            yyerror("Int identifier required.");
+        $$ = cid;
+    }
     | SUB UnaryExp
     {
+        auto cc = (IdentToken*)$2;
+        if (cc->Type() != IntType)
+            yyerror("Int Identifier required.");
+
         auto cid = (IntIdentToken*)$2;
+        if (cid->Type() != IntType)
+            yyerror("Int identifier required.");
         if (cid->isConst())
             $$ = new IntIdentToken(-cid->Val());
         else {
@@ -867,7 +882,13 @@ UnaryExp:   PrimaryExp {$$ = $1;}
     }
     | NOT UnaryExp
     {
+        auto cc = (IdentToken*)$2;
+        if (cc->Type() != IntType)
+            yyerror("Int Identifier required.");
+
         auto cid = (IntIdentToken*)$2;
+        if (cid->Type() != IntType)
+            yyerror("Int identifier required.");
         if (cid->isConst())
             $$ = new IntIdentToken(!cid->Val());
         else {
@@ -883,6 +904,9 @@ FuncParams: Exp
 MulExp:     UnaryExp {$$ = $1;}
     | MulExp MUL UnaryExp
     {
+        auto cc = (IdentToken*)$3;
+        if (cc->Type() != IntType)
+            yyerror("Int Identifier required.");
         auto c1 = (IntIdentToken*)$1, c2 = (IntIdentToken*)$3;
         if (*c1&&*c2) {
             $$ = new IntIdentToken(c1->Val() * c2->Val());
@@ -896,6 +920,9 @@ MulExp:     UnaryExp {$$ = $1;}
     }
     | MulExp DIV UnaryExp
     {
+        auto cc = (IdentToken*)$3;
+        if (cc->Type() != IntType)
+            yyerror("Int Identifier required.");
         auto c1 = (IntIdentToken*)$1, c2 = (IntIdentToken*)$3;
         if (*c1&&*c2) {
             if (c2->Val() == 0)
@@ -911,6 +938,9 @@ MulExp:     UnaryExp {$$ = $1;}
     }
     | MulExp MOD UnaryExp
     {
+        auto cc = (IdentToken*)$3;
+        if (cc->Type() != IntType)
+            yyerror("Int Identifier required.");
         auto c1 = (IntIdentToken*)$1, c2 = (IntIdentToken*)$3;
         if (*c1&&*c2) {
             if (c2->Val() == 0)
@@ -928,6 +958,10 @@ MulExp:     UnaryExp {$$ = $1;}
 AddExp:     MulExp {$$ = $1;}
     | AddExp ADD MulExp
     {
+        auto cc = (IdentToken*)$3;
+        if (cc->Type() != IntType)
+            yyerror("Int Identifier required.");
+
         auto c1 = (IntIdentToken*)$1, c2 = (IntIdentToken*)$3;
         if (*c1&&*c2) {
             $$ = new IntIdentToken(c1->Val() + c2->Val());
@@ -941,6 +975,10 @@ AddExp:     MulExp {$$ = $1;}
     }
     | AddExp SUB MulExp
     {
+        auto cc = (IdentToken*)$3;
+        if (cc->Type() != IntType)
+            yyerror("Int Identifier required.");
+
         auto c1 = (IntIdentToken*)$1, c2 = (IntIdentToken*)$3;
         if (*c1&&*c2) {
             $$ = new IntIdentToken(c1->Val() - c2->Val());
@@ -955,6 +993,10 @@ AddExp:     MulExp {$$ = $1;}
     ;
 RelExp:     AddExp
     {
+        auto cc = (IdentToken*)$1;
+        if (cc->Type() != IntType)
+            yyerror("Int Identifier requireed.");
+
         auto exp = (IdentToken*)$1;
         auto cid = new BoolIdentToken(exp->getName(), false);
         $$ = cid;
