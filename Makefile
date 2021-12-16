@@ -55,9 +55,18 @@ clean:
 
 # For testing
 TEST_DIR = $(NOW_DIR)/test
+TEST_SY = $(TEST_DIR)/test.sy
+TEST_EE = $(TEST_DIR)/test.ee
 TEST_IN = $(TEST_DIR)/test.in
 TEST_OUT = $(TEST_DIR)/test.out
 
 .PHONY: test
-test: $(TARGET_DIR) $(TEST_IN)
-	$(TARGET_DIR) -S -e $(TEST_IN) -o $(TEST_OUT)
+test: $(TEST_EE) $(TEST_IN)
+	minivm $(TEST_EE) < $(TEST_IN) > $(TEST_OUT)
+
+$(TEST_EE): $(TARGET_DIR) $(TEST_SY)
+	$(TARGET_DIR) -S -e $(TEST_SY) -o $(TEST_EE)
+
+.PHONY: selftest
+selftest: $(TARGET_DIR) $(TEST_SY)
+	$(TARGET_DIR) -S -e $(TEST_SY) -o $(TEST_EE)

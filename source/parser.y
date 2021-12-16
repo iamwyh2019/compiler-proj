@@ -674,7 +674,7 @@ LVal:   IDENT
             IntIdentToken *newcid; // The value
 
             if (allConst) {
-                newcid = new IntIdentToken(cid->getName(), to_string(offset*INTSIZE));
+                newcid = new IntIdentToken(cid->getName(), to_string(offset*INTSIZE), downToEle);
             }
             else {
                 auto idxVar = new IntIdentToken(); // The int token for the index
@@ -689,10 +689,11 @@ LVal:   IDENT
                     auto tmp = new IntIdentToken(); // The temp var for multiplication
                     parser.addDecl(tmp);
                     idxOffset = arrOp_access.ndim(i) * 4;
-                    parser.addStmt(tmp->getName() + " = " + indices[i]->getName() + " * " + to_string(idxOffset));
+                    parser.addStmt(tmp->getName() + " = " + 
+                            indices[i]->getName() + " * " + to_string(idxOffset));
                     parser.addStmt(idxName + " = " + idxName + " + " + tmp->getName());
                 }
-                newcid = new IntIdentToken(cid->getName(), idxVar->getName());
+                newcid = new IntIdentToken(cid->getName(), idxVar->getName(), downToEle);
             }
 
             $$ = newcid;

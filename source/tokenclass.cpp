@@ -79,10 +79,13 @@ IntIdentToken::IntIdentToken(int v, bool is_tmp, bool is_param):
 IntIdentToken::IntIdentToken(bool is_tmp, bool is_param):
     IdentToken(emptyString, IntType, true, false, is_tmp, is_param) {is_slice = false;}
 
-IntIdentToken::IntIdentToken(string &arrName, string index):
+IntIdentToken::IntIdentToken(string &arrName, const string &index, bool downToEle):
     IdentToken(emptyString, IntType, false, false, false, false) {
         is_slice = true;
-        eeyore_name = arrName + '[' + index + ']';
+        if (downToEle)
+            eeyore_name = arrName + '[' + index + ']';
+        else
+            eeyore_name = arrName + " + " + index;
     }
 
 int IntIdentToken::Val() const {return val;}

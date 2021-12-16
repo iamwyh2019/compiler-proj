@@ -107,7 +107,7 @@ public:
     IntIdentToken(const string&, bool, bool=false, bool=false);
     IntIdentToken(int, bool=false, bool=false); // Constant int in the middle
     IntIdentToken(bool=true, bool=false); // temporary variable in the middle. Don't care about its value.
-    IntIdentToken(string&, string);
+    IntIdentToken(string&, const string&, bool);
     int Val() const;
     void setVal(int);
     virtual string Declare() const;
