@@ -93,7 +93,7 @@ ConstDef:   IDENT ASSIGN ConstInitVal
         cid->setShape(*(deque<int>*)$2);
         nowScope->addToken(cid);
 
-        parser.addDecl(cid);
+        parser.addDecl(cid, nowFunc);
 
         arrOp_assign.setTarget(cid);
     }
@@ -168,7 +168,7 @@ VarDef: IDENT
         auto cid = new IntIdentToken(name, false); // not const. Initially 0
         nowScope->addToken(cid);
 
-        parser.addDecl(cid);
+        parser.addDecl(cid, nowFunc);
         parser.addStmt(cid->getName() + " = 0");
     }
     | IDENT ASSIGN InitVal
@@ -188,7 +188,7 @@ VarDef: IDENT
 
         if (!initRes->isTmp()) { // It's either a constant or a declared variable, need to declare a new one
             cid = new IntIdentToken(name, false); // not const
-            parser.addDecl(cid);
+            parser.addDecl(cid, nowFunc);
             parser.addStmt(cid->getName() + " = " + initRes->getName());
         }
         else { // It's a temporary variable, just use it
@@ -214,7 +214,7 @@ VarDef: IDENT
         cid->setShape(*(deque<int>*)$2);
         nowScope->addToken(cid);
 
-        parser.addDecl(cid->Declare());
+        parser.addDecl(cid->Declare(), nowFunc);
     }
     | IDENT ArrayDim
     {
@@ -232,7 +232,7 @@ VarDef: IDENT
         cid->setShape(*(deque<int>*)$2);
         nowScope->addToken(cid);
 
-        parser.addDecl("@" + cid->Declare());
+        parser.addDecl("@" + cid->Declare(), nowFunc);
 
         arrOp_assign.setTarget(cid);
     }
@@ -668,7 +668,7 @@ LVal:   IDENT
             }
             else {
                 auto idxVar = new IntIdentToken(); // The int token for the index
-                parser.addDecl(idxVar);
+                parser.addDecl(idxVar, nowFunc);
                 parser.addStmt(idxVar->getName() + " = " + to_string(offset*INTSIZE));
                 string &idxName = idxVar->getName();
 
@@ -677,7 +677,7 @@ LVal:   IDENT
                     if (indices[i]->isConst()) continue;
 
                     auto tmp = new IntIdentToken(); // The temp var for multiplication
-                    parser.addDecl(tmp);
+                    parser.addDecl(tmp, nowFunc);
                     idxOffset = arrOp_access.ndim(i) * 4;
                     parser.addStmt(tmp->getName() + " = " + 
                             indices[i]->getName() + " * " + to_string(idxOffset));
@@ -735,7 +735,7 @@ PrimaryExp: LPAREN Exp RPAREN {$$ = $2;}
             auto intcid = (IntIdentToken*)cid;
             if (intcid->isSlice()) {
                 auto newcid = new IntIdentToken();
-                parser.addDecl(newcid);
+                parser.addDecl(newcid, nowFunc);
                 parser.addStmt(newcid->getName() + " = " + cid->getName());
                 cid = newcid;
             }
@@ -783,7 +783,7 @@ UnaryExp:   PrimaryExp {$$ = $1;}
 
         if (func->retType() == RetInt) {
             auto cc = new IntIdentToken();
-            parser.addDecl(cc);
+            parser.addDecl(cc, nowFunc);
             parser.addStmt(cc->getName() + " = call " + func->getName());
             $$ = cc;
         }
@@ -833,7 +833,7 @@ UnaryExp:   PrimaryExp {$$ = $1;}
 
             if (func->retType() == RetInt) {
                 auto cc = new IntIdentToken();
-                parser.addDecl(cc);
+                parser.addDecl(cc, nowFunc);
                 parser.addStmt(cc->getName() + " = call " + func->getName());
                 $$ = cc;
             }
@@ -866,7 +866,7 @@ UnaryExp:   PrimaryExp {$$ = $1;}
             $$ = new IntIdentToken(-cid->Val());
         else {
             auto newcid = new IntIdentToken();
-            parser.addDecl(newcid);
+            parser.addDecl(newcid, nowFunc);
             parser.addStmt(newcid->getName() + " = -" + cid->getName());
             $$ = newcid;
         }
@@ -884,7 +884,7 @@ UnaryExp:   PrimaryExp {$$ = $1;}
             $$ = new IntIdentToken(!cid->Val());
         else {
             auto newcid = new IntIdentToken(); // A temporary var
-            parser.addDecl(newcid);
+            parser.addDecl(newcid, nowFunc);
             parser.addStmt(newcid->getName() + " = !" + cid->getName());
             $$ = newcid;
         }
@@ -904,7 +904,7 @@ MulExp:     UnaryExp {$$ = $1;}
         }
         else {
             auto newcid = new IntIdentToken(); // A tmp var
-            parser.addDecl(newcid);
+            parser.addDecl(newcid, nowFunc);
             parser.addStmt(newcid->getName() + " = " + c1->getName() + " * " + c2->getName());
             $$ = newcid;
         }
@@ -922,7 +922,7 @@ MulExp:     UnaryExp {$$ = $1;}
         }
         else {
             auto newcid = new IntIdentToken(); // A tmp var
-            parser.addDecl(newcid);
+            parser.addDecl(newcid, nowFunc);
             parser.addStmt(newcid->getName() + " = " + c1->getName() + " / " + c2->getName());
             $$ = newcid;
         }
@@ -940,7 +940,7 @@ MulExp:     UnaryExp {$$ = $1;}
         }
         else {
             auto newcid = new IntIdentToken();
-            parser.addDecl(newcid);
+            parser.addDecl(newcid, nowFunc);
             parser.addStmt(newcid->getName() + " = " + c1->getName() + " % " + c2->getName());
             $$ = newcid;
         }
@@ -959,7 +959,7 @@ AddExp:     MulExp {$$ = $1;}
         }
         else {
             auto newcid = new IntIdentToken();
-            parser.addDecl(newcid);
+            parser.addDecl(newcid, nowFunc);
             parser.addStmt(newcid->getName() + " = " + c1->getName() + " + " + c2->getName());
             $$ = newcid;
         }
@@ -976,7 +976,7 @@ AddExp:     MulExp {$$ = $1;}
         }
         else {
             auto newcid = new IntIdentToken();
-            parser.addDecl(newcid);
+            parser.addDecl(newcid, nowFunc);
             parser.addStmt(newcid->getName() + " = " + c1->getName() + " - " + c2->getName());
             $$ = newcid;
         }
@@ -996,7 +996,7 @@ RelExp:     AddExp
     {
         auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
         auto cid = new BoolIdentToken(c1->getName() + " < " + c2->getName());
-        parser.addDecl(cid);
+        parser.addDecl(cid, nowFunc);
         parser.addStmt(cid->getExp());
         $$ = cid;
     }
@@ -1004,7 +1004,7 @@ RelExp:     AddExp
     {
         auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
         auto cid = new BoolIdentToken(c1->getName() + " > " + c2->getName());
-        parser.addDecl(cid);
+        parser.addDecl(cid, nowFunc);
         parser.addStmt(cid->getExp());
         $$ = cid;
     }
@@ -1012,7 +1012,7 @@ RelExp:     AddExp
     {
         auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
         auto cid = new BoolIdentToken(c1->getName() + " <= " + c2->getName());
-        parser.addDecl(cid);
+        parser.addDecl(cid, nowFunc);
         parser.addStmt(cid->getExp());
         $$ = cid;
     }
@@ -1020,7 +1020,7 @@ RelExp:     AddExp
     {
         auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
         auto cid = new BoolIdentToken(c1->getName() + " >= " + c2->getName());
-        parser.addDecl(cid);
+        parser.addDecl(cid, nowFunc);
         parser.addStmt(cid->getExp());
         $$ = cid;
     }
@@ -1030,7 +1030,7 @@ EqExp:      RelExp {$$ = $1;}
     {
         auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
         auto cid = new BoolIdentToken(c1->getName() + " == " + c2->getName());
-        parser.addDecl(cid);
+        parser.addDecl(cid, nowFunc);
         parser.addStmt(cid->getExp());
         $$ = cid;
     }
@@ -1038,7 +1038,7 @@ EqExp:      RelExp {$$ = $1;}
     {
         auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
         auto cid = new BoolIdentToken(c1->getName() + " != " + c2->getName());
-        parser.addDecl(cid);
+        parser.addDecl(cid, nowFunc);
         parser.addStmt(cid->getExp());
         $$ = cid;
     }

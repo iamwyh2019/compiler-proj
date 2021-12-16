@@ -299,13 +299,16 @@ Parser::Parser() {
     indent = 0;
 }
 
-void Parser::addDecl(const string &decl) {
-    decls.emplace_back(decl);
+void Parser::addDecl(const string &decl, FuncIdentToken *nowFunc) {
+    if (nowFunc == nullptr)
+        decls.emplace_back(decl);
+    else
+        addDeclInFunc(nowFunc->getName(), decl);
 }
 
-void Parser::addDecl(IdentToken *cid) {
+void Parser::addDecl(IdentToken *cid, FuncIdentToken *nowFunc) {
     // Declarations are never indented
-    addDecl(cid->Declare());
+    addDecl(cid->Declare(), nowFunc);
 }
 
 // ex_indent: extra indentation
@@ -317,6 +320,14 @@ void Parser::addStmt(const string &stmt, int ex_indent) {
 
 void Parser::addStmt(IdentToken *cid, int ex_indent) {
     addStmt(cid->Declare(), ex_indent);
+}
+
+void Parser::addDeclInFunc(const string& funcName, const string& decl) {
+    funcDecls[funcName].emplace_back(decl);
+}
+
+void Parser::addDeclInFunc(const string& funcName, IdentToken *token) {
+    addDeclInFunc(funcName, token->Declare());
 }
 
 string Parser::nextTag() {
@@ -403,10 +414,12 @@ void Parser::removeIndent() {
     --indent;
 }
 
-void Parser::parse() {
+void Parser::printDecls(vector<string> &decs, int indent) {
     string dec, sub, arrName;
     int tot, pos;
-    for (auto &decl: decls) {
+    for (auto &decl: decs) {
+        for (int i = 0; i < indent; ++i)
+            cout << "\t";
         if (decl[0] == '@') {
             cout << decl.substr(1) << endl;
             //"@var 24 T0"
@@ -423,11 +436,24 @@ void Parser::parse() {
         else
             cout << decl << endl;
     }
+}
+
+void Parser::parse() {
+    printDecls(decls, 0);
 
     int nstmts = stmts.size();
+    string fname;
+
     for (int i = 0; i < nstmts; ++i) {
+        auto &stmt = stmts[i];
         for (int j = 0; j < indents[i]; ++j)
             cout << "\t";
-        cout << stmts[i] << endl;
+        cout << stmt << endl;
+
+        if (stmt[0] == 'f' && stmt[1] == '_'){ // Function definition
+            fname = stmt.substr(0, stmt.find(' '));
+            auto &func_decls = funcDecls[fname];
+            printDecls(func_decls, indents[i]+1);
+        }
     }
 }

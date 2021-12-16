@@ -217,18 +217,22 @@ public:
 class Parser {
     vector<string> decls; // Declarations
     vector<string> stmts; // Statements
+    map<string, vector<string>> funcDecls;
     vector<int> indents; // Each statement's indentation level. Initially 0
     int label, indent; // Track the label number and indentation
     stack<JumpLabelGroup*> ifstmts;
     stack<JumpLabelGroup*> whilestmts; 
     stack<JumpLabelGroup*> allstmts;
     JumpLabelGroup* _newGroup(JumpType);
+    void printDecls(vector<string>&, int);
 public:
     Parser();
-    void addDecl(IdentToken*); // same as addDecl(cid->Declare())
-    void addDecl(const string&); // Add a declaration
+    void addDecl(IdentToken*, FuncIdentToken*); // same as addDecl(cid->Declare())
+    void addDecl(const string&, FuncIdentToken*); // Add a declaration
     void addStmt(IdentToken*, int=0); // same as addStmt(cid->Declare())
     void addStmt(const string&, int=0); // Add a statement. Will maintain its indentation
+    void addDeclInFunc(const string&, const string&);
+    void addDeclInFunc(const string&, IdentToken*);
 
     void addIndent(); // Add one indentation level ("\t")
     void removeIndent(); // Remove one indentation level
