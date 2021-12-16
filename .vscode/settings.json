@@ -5,6 +5,7 @@
         "initializer_list": "cpp",
         "utility": "cpp",
         "new": "cpp",
-        "*.tcc": "cpp"
+        "*.tcc": "cpp",
+        "iostream": "cpp"
     }
 }

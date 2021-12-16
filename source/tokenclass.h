@@ -30,6 +30,12 @@ enum RetType {
     RetInt,
 };
 
+enum JumpType {
+    IfType,
+    WhileType,
+    PhonyType,
+};
+
 class Token;
 class IdentToken;
 class IntIdentToken;
@@ -191,16 +197,12 @@ public:
     IntIdentToken* operator()(int); // To access member (for var array)
 };
 
-// IfStatement
-struct IfStmt {
-    string elseTag; // the tag for "else" stmt
-    string endTag; // the tag for finishing "then" and skipping "else"
-};
-
-// WhileStatement
-struct WhileStmt {
-    string judgeTag; // begin judging 
-    string failTag; // when judge failed
+class JumpLabelGroup {
+    JumpType type;
+    friend class Parser;
+public:
+    string trueTag, falseTag, beginTag, endTag;
+    JumpLabelGroup(JumpType);
 };
 
 // Parser
@@ -213,8 +215,10 @@ class Parser {
     vector<string> stmts; // Statements
     vector<int> indents; // Each statement's indentation level. Initially 0
     int label, indent; // Track the label number and indentation
-    stack<IfStmt*> ifstmts;
-    stack<WhileStmt*> whilestmts; 
+    stack<JumpLabelGroup*> ifstmts;
+    stack<JumpLabelGroup*> whilestmts; 
+    stack<JumpLabelGroup*> allstmts;
+    JumpLabelGroup* _newGroup(JumpType);
 public:
     Parser();
     void addDecl(IdentToken*); // same as addDecl(cid->Declare())
@@ -226,10 +230,12 @@ public:
     void removeIndent(); // Remove one indentation level
 
     string nextTag();
-    IfStmt* newIf();
-    WhileStmt* newWhile();
-    IfStmt* lastIf(bool=false);
-    WhileStmt* lastWhile(bool=false);
+    JumpLabelGroup* newIf();
+    JumpLabelGroup* newWhile();
+    JumpLabelGroup* newGroup();
+    JumpLabelGroup* lastIf(bool=false);
+    JumpLabelGroup* lastWhile(bool=false);
+    JumpLabelGroup* lastGroup(bool=false);
 
     void parse();
 };

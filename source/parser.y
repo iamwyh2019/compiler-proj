@@ -543,44 +543,47 @@ Stmt:   LVal ASSIGN Exp SEMI
         auto cid = (IntIdentToken*)$2;
         parser.addStmt("return " + cid->getName());
     }
-    | IF LPAREN Cond RPAREN
+    | IF LPAREN
     {
-        // generate 
-        auto cid = (BoolIdentToken*)$3;
-        auto ifstmt = parser.newIf();
-        parser.addStmt("if " + cid->getName() + "==0 goto " + ifstmt->elseTag);
+        auto newgroup = parser.newIf();
+        $$ = newgroup;
+    }
+    Cond RPAREN
+    {
+        auto tags = (JumpLabelGroup*)$3;
+        parser.addStmt(tags->trueTag + ":");
     }
     Stmt DanglingElse
     | WHILE LPAREN
     {
         auto whilestmt = parser.newWhile();
-        parser.addStmt(whilestmt->judgeTag + ":");
+        parser.addStmt(whilestmt->beginTag + ":");
+        $$ = whilestmt;
     }
     Cond RPAREN
     {
-        auto whilestmt = parser.lastWhile();
-        auto cid = (BoolIdentToken*)$4;
-        parser.addStmt("if " + cid->getName() + "==0 goto " + whilestmt->failTag);
+        auto tags = (JumpLabelGroup*)$3;
+        parser.addStmt(tags->trueTag + ":");
     }
     Stmt
     {
         auto whilestmt = parser.lastWhile(true);
-        parser.addStmt("goto " + whilestmt->judgeTag, 1);
-        parser.addStmt(whilestmt->failTag + ":");
+        parser.addStmt("goto " + whilestmt->beginTag, 1);
+        parser.addStmt(whilestmt->falseTag + ":");
     }
     | CONT SEMI
     {
         auto whilestmt = parser.lastWhile();
         if (whilestmt == nullptr)
             yyerror("Not in a loop.");
-        parser.addStmt("goto " + whilestmt->judgeTag);
+        parser.addStmt("goto " + whilestmt->beginTag);
     }
     | BREAK SEMI
     {
         auto whilestmt = parser.lastWhile();
         if (whilestmt == nullptr)
             yyerror("Not in a loop.");
-        parser.addStmt("goto " + whilestmt->failTag);
+        parser.addStmt("goto " + whilestmt->falseTag);
     }
     ;
 
@@ -588,7 +591,7 @@ DanglingElse:   ELSE
     {
         auto thisif = parser.lastIf();
         parser.addStmt("goto " + thisif->endTag, 1);
-        parser.addStmt(thisif->elseTag + ":");
+        parser.addStmt(thisif->falseTag + ":");
     }
     Stmt
     {
@@ -597,12 +600,22 @@ DanglingElse:   ELSE
     }
     | {
         auto thisif = parser.lastIf(true);
-        parser.addStmt(thisif->elseTag + ":");
+        parser.addStmt(thisif->falseTag + ":");
     }
     ;
 
 Exp:    AddExp;
-Cond:   LOrExp;
+Cond: 
+    {
+        parser.newGroup();
+    }
+    LOrExp
+    {
+        auto lastgroup = parser.lastGroup(true);
+        parser.addStmt(lastgroup->falseTag + ":");
+        lastgroup = parser.lastGroup();
+        parser.addStmt("goto " + lastgroup->falseTag);
+    }
 LVal:   IDENT
     {
         auto name = *(string*)$1;
@@ -997,24 +1010,36 @@ EqExp:      RelExp {$$ = $1;}
         $$ = cid;
     }
     ;
-LAndExp:    EqExp {$$ = $1;}
+LAndExp:    EqExp 
+    {
+        auto cid = (BoolIdentToken*)$1;
+        auto lastgroup = parser.lastGroup();
+        parser.addStmt("if " + cid->getName() + "==0 goto " + lastgroup->falseTag);
+    }
     | LAndExp AND EqExp
     {
-        auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
-        auto cid = new BoolIdentToken(c1->getName() + " && " + c2->getName());
-        parser.addDecl(cid);
-        parser.addStmt(cid->getExp());
-        $$ = cid;
+        auto cid = (BoolIdentToken*)$3;
+        auto lastgroup = parser.lastGroup();
+        parser.addStmt("if " + cid->getName() + "==0 goto " + lastgroup->falseTag);
     }
     ;
-LOrExp:     LAndExp {$$ = $1;}
-    | LOrExp OR LAndExp
+LOrExp:
+    LAndExp
     {
-        auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
-        auto cid = new BoolIdentToken(c1->getName() + " || " + c2->getName());
-        parser.addDecl(cid);
-        parser.addStmt(cid->getExp());
-        $$ = cid;
+        auto lastgroup = parser.lastGroup();
+        parser.addStmt("goto " + lastgroup->trueTag);
+    }
+    |
+    LOrExp
+    {
+        auto lastgroup = parser.lastGroup(true);
+        parser.addStmt(lastgroup->falseTag + ":");
+        parser.newGroup();
+    }
+    OR LAndExp
+    {
+        auto lastgroup = parser.lastGroup();
+        parser.addStmt("goto " + lastgroup->trueTag);
     }
     ;
 ConstExp:   AddExp

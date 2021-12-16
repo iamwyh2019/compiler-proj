@@ -316,36 +316,75 @@ string Parser::nextTag() {
     return "l" + to_string(num);
 }
 
-IfStmt* Parser::newIf() {
-    auto newif = new IfStmt;
-    newif->elseTag = nextTag();
+JumpLabelGroup::JumpLabelGroup(JumpType tp) {
+    type = tp;
+}
+
+JumpLabelGroup* Parser::_newGroup(JumpType tp) {
+    auto newif = new JumpLabelGroup(tp);
+    newif->trueTag = nextTag();
+    newif->falseTag = nextTag();
+    newif->beginTag = nextTag();
     newif->endTag = nextTag();
-    ifstmts.emplace(newif);
     return newif;
 }
 
-IfStmt* Parser::lastIf(bool pop) {
+JumpLabelGroup* Parser::newIf() {
+    auto newif = _newGroup(IfType);
+    ifstmts.emplace(newif);
+    allstmts.emplace(newif);
+    return newif;
+}
+
+JumpLabelGroup* Parser::lastIf(bool pop) {
     if (ifstmts.empty())
         return nullptr;
     auto lastif = ifstmts.top();
-    if (pop) ifstmts.pop();
+    if (pop) {
+        ifstmts.pop();
+        allstmts.pop();
+    }
     return lastif;
 }
 
-WhileStmt* Parser::newWhile() {
-    auto newwhile = new WhileStmt;
-    newwhile->judgeTag = nextTag();
-    newwhile->failTag = nextTag();
+JumpLabelGroup* Parser::newWhile() {
+    auto newwhile = _newGroup(WhileType);
     whilestmts.emplace(newwhile);
+    allstmts.emplace(newwhile);
     return newwhile;
 }
 
-WhileStmt* Parser::lastWhile(bool pop) {
+JumpLabelGroup* Parser::lastWhile(bool pop) {
     if (whilestmts.empty())
         return nullptr;
     auto lastwhile = whilestmts.top();
-    if (pop) whilestmts.pop();
+    if (pop) {
+        whilestmts.pop();
+        allstmts.pop();
+    }
     return lastwhile;
+}
+
+JumpLabelGroup* Parser::newGroup() {
+    auto newgroup = new JumpLabelGroup(PhonyType);
+    newgroup->trueTag = allstmts.top()->trueTag;
+    newgroup->falseTag = nextTag();
+    allstmts.emplace(newgroup);
+    whilestmts.emplace(newgroup);
+    ifstmts.emplace(newgroup);
+    return newgroup;
+}
+
+JumpLabelGroup* Parser::lastGroup(bool pop) {
+    if (allstmts.empty())
+        return nullptr;
+    auto lastgroup = allstmts.top();
+    if (pop) {
+        allstmts.pop();
+        whilestmts.pop();
+        ifstmts.pop();
+    }
+    return lastgroup;
 }
 
 void Parser::addIndent() {
