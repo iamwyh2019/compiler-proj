@@ -22,6 +22,7 @@ extern int yylex();
 extern int yyparse();
 extern const int INTSIZE;
 extern int yylineno, charNum;
+extern FILE *yyin;
 
 Scope globalScope;
 Scope *nowScope = &globalScope;
@@ -1032,7 +1033,15 @@ void yyerror(const string &s) {
     yyerror(s.c_str());
 }
 
-int main() {
+int main(int argc, char **argv) {
+    if (argc >= 4)
+        if ((yyin = fopen(argv[3], "r")) == NULL)
+            yyerror("Cannot open input file.");
+    
+    if (argc >= 6)
+        if (freopen(argv[5], "w", stdout) == NULL)
+            yyerror("Cannot open output file.");
+
     nowScope->addToken(new FuncIdentToken(RetInt, "getint", 0));
     nowScope->addToken(new FuncIdentToken(RetInt, "getch", 0));
     nowScope->addToken(new FuncIdentToken(RetInt, "getarray", 1));
@@ -1042,5 +1051,7 @@ int main() {
 
     yyparse();
     parser.parse();
+
+    fclose(yyin);
     return 0;
 }
