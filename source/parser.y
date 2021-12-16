@@ -21,6 +21,7 @@ void yyerror(const string&);
 extern int yylex();
 extern int yyparse();
 extern const int INTSIZE;
+extern int yylineno, charNum;
 
 Scope globalScope;
 Scope *nowScope = &globalScope;
@@ -545,6 +546,37 @@ Stmt:   LVal ASSIGN Exp SEMI
         parser.addStmt("if " + cid->getName() + "==0 goto " + ifstmt->elseTag);
     }
     Stmt DanglingElse
+    | WHILE LPAREN
+    {
+        auto whilestmt = parser.newWhile();
+        parser.addStmt(whilestmt->judgeTag + ":");
+    }
+    Cond RPAREN
+    {
+        auto whilestmt = parser.lastWhile();
+        auto cid = (BoolIdentToken*)$4;
+        parser.addStmt("if " + cid->getName() + "==0 goto " + whilestmt->failTag);
+    }
+    Stmt
+    {
+        auto whilestmt = parser.lastWhile(true);
+        parser.addStmt("goto " + whilestmt->judgeTag, 1);
+        parser.addStmt(whilestmt->failTag + ":");
+    }
+    | CONT SEMI
+    {
+        auto whilestmt = parser.lastWhile();
+        if (whilestmt == nullptr)
+            yyerror("Not in a loop.");
+        parser.addStmt("goto " + whilestmt->judgeTag);
+    }
+    | BREAK SEMI
+    {
+        auto whilestmt = parser.lastWhile();
+        if (whilestmt == nullptr)
+            yyerror("Not in a loop.");
+        parser.addStmt("goto " + whilestmt->failTag);
+    }
     ;
 
 DanglingElse:   ELSE
@@ -692,6 +724,7 @@ PrimaryExp: LPAREN Exp RPAREN {$$ = $2;}
         auto cid = (IntIdentToken*)$1;
         if (cid->isSlice()) {
             auto newcid = new IntIdentToken();
+            parser.addDecl(newcid);
             parser.addStmt(newcid->getName() + " = " + cid->getName());
             cid = newcid;
         }
@@ -753,42 +786,53 @@ UnaryExp:   PrimaryExp {$$ = $1;}
     | IDENT LPAREN RPAREN
     {
         auto name = *(string*)$1;
-        auto cid = (IdentToken*)nowScope->findAll(name);
 
-        if (cid == nullptr) {
-            string errmsg = "\"";
-            errmsg += name;
-            errmsg += "\" undefined in this scope.";
-            yyerror(errmsg);
+        if (name == "starttime") {
+            parser.addStmt("param " + to_string(yylineno));
+            parser.addStmt("call f__sysy_starttime");
         }
-
-        if (cid->Type() != FuncType) {
-            string errmsg = "\"";
-            errmsg += name;
-            errmsg += "\" is not a function.";
-            yyerror(errmsg);
-        }
-
-        auto func = (FuncIdentToken*)cid;
-        if (func->nParams() != 0){
-            string errmsg = to_string(func->nParams());
-            errmsg += " params expected, but 0 get.";
-            yyerror(errmsg);
-        }
-
-        if (func->retType() == RetInt) {
-            auto cc = new IntIdentToken();
-            parser.addDecl(cc);
-            parser.addStmt(cc->getName() + " = call " + func->getName());
-            $$ = cc;
-        }
-        else if (func->retType() == RetVoid) {
-            parser.addStmt("call " + func->getName());
-            $$ = new VoidToken();
+        else if (name == "stoptime") {
+            parser.addStmt("param " + to_string(yylineno));
+            parser.addStmt("call f__sysy_stoptime");
         }
         else {
-            yyerror("Unknown return type.");
-        }
+            auto cid = (IdentToken*)nowScope->findAll(name);
+
+            if (cid == nullptr) {
+                string errmsg = "\"";
+                errmsg += name;
+                errmsg += "\" undefined in this scope.";
+                yyerror(errmsg);
+            }
+
+            if (cid->Type() != FuncType) {
+                string errmsg = "\"";
+                errmsg += name;
+                errmsg += "\" is not a function.";
+                yyerror(errmsg);
+            }
+
+            auto func = (FuncIdentToken*)cid;
+            if (func->nParams() != 0){
+                string errmsg = to_string(func->nParams());
+                errmsg += " params expected, but 0 get.";
+                yyerror(errmsg);
+            }
+
+            if (func->retType() == RetInt) {
+                auto cc = new IntIdentToken();
+                parser.addDecl(cc);
+                parser.addStmt(cc->getName() + " = call " + func->getName());
+                $$ = cc;
+            }
+            else if (func->retType() == RetVoid) {
+                parser.addStmt("call " + func->getName());
+                $$ = new VoidToken();
+            }
+            else {
+                yyerror("Unknown return type.");
+            }
+        }        
     }
     | ADD UnaryExp {$$ = $2;}
     | SUB UnaryExp
@@ -901,6 +945,7 @@ RelExp:     AddExp
     {
         auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
         auto cid = new BoolIdentToken(c1->getName() + " < " + c2->getName());
+        parser.addDecl(cid);
         parser.addStmt(cid->getExp());
         $$ = cid;
     }
@@ -908,6 +953,7 @@ RelExp:     AddExp
     {
         auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
         auto cid = new BoolIdentToken(c1->getName() + " > " + c2->getName());
+        parser.addDecl(cid);
         parser.addStmt(cid->getExp());
         $$ = cid;
     }
@@ -915,6 +961,7 @@ RelExp:     AddExp
     {
         auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
         auto cid = new BoolIdentToken(c1->getName() + " <= " + c2->getName());
+        parser.addDecl(cid);
         parser.addStmt(cid->getExp());
         $$ = cid;
     }
@@ -922,6 +969,7 @@ RelExp:     AddExp
     {
         auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
         auto cid = new BoolIdentToken(c1->getName() + " >= " + c2->getName());
+        parser.addDecl(cid);
         parser.addStmt(cid->getExp());
         $$ = cid;
     }
@@ -931,6 +979,7 @@ EqExp:      RelExp {$$ = $1;}
     {
         auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
         auto cid = new BoolIdentToken(c1->getName() + " == " + c2->getName());
+        parser.addDecl(cid);
         parser.addStmt(cid->getExp());
         $$ = cid;
     }
@@ -938,6 +987,7 @@ EqExp:      RelExp {$$ = $1;}
     {
         auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
         auto cid = new BoolIdentToken(c1->getName() + " != " + c2->getName());
+        parser.addDecl(cid);
         parser.addStmt(cid->getExp());
         $$ = cid;
     }
@@ -947,6 +997,7 @@ LAndExp:    EqExp {$$ = $1;}
     {
         auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
         auto cid = new BoolIdentToken(c1->getName() + " && " + c2->getName());
+        parser.addDecl(cid);
         parser.addStmt(cid->getExp());
         $$ = cid;
     }
@@ -956,6 +1007,7 @@ LOrExp:     LAndExp {$$ = $1;}
     {
         auto c1 = (IdentToken*)$1, c2 = (IdentToken*)$3;
         auto cid = new BoolIdentToken(c1->getName() + " || " + c2->getName());
+        parser.addDecl(cid);
         parser.addStmt(cid->getExp());
         $$ = cid;
     }
@@ -972,7 +1024,6 @@ ConstExp:   AddExp
 %%
 
 void yyerror(const char *s) {
-    extern int yylineno, charNum;
     cout << "Line " << yylineno << "," << charNum << ": " << s << endl;
     exit(1);
 }
@@ -982,6 +1033,13 @@ void yyerror(const string &s) {
 }
 
 int main() {
+    nowScope->addToken(new FuncIdentToken(RetInt, "getint", 0));
+    nowScope->addToken(new FuncIdentToken(RetInt, "getch", 0));
+    nowScope->addToken(new FuncIdentToken(RetInt, "getarray", 1));
+    nowScope->addToken(new FuncIdentToken(RetVoid, "putint", 1));
+    nowScope->addToken(new FuncIdentToken(RetVoid, "putch", 1));
+    nowScope->addToken(new FuncIdentToken(RetVoid, "putarray", 2));
+
     yyparse();
     parser.parse();
     return 0;

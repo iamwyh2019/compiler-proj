@@ -129,7 +129,7 @@ class FuncIdentToken: public IdentToken {
     RetType ret_type;
     int n_params;
 public:
-    FuncIdentToken(RetType, string&);
+    FuncIdentToken(RetType, const string&, int=0);
     void setNParams(int);
     int nParams() const;
     virtual string Declare() const;

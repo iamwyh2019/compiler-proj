@@ -121,11 +121,11 @@ string ArrayIdentToken::Declare() const {
 }
 
 // ============= FuncToken =============
-FuncIdentToken::FuncIdentToken(RetType return_type, string &_name):
+FuncIdentToken::FuncIdentToken(RetType return_type, const string &_name, int nparams):
     IdentToken(_name, FuncType, false, false, false, false) {
         ret_type = return_type;
         eeyore_name = "f_" + _name;
-        n_params = 0;
+        n_params = nparams;
     }
 
 void FuncIdentToken::setNParams(int nparams) {
