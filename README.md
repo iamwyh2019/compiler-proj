@@ -2,7 +2,7 @@
 编译大作业：SysY转Eeyore。
 
 ## 进度
-- 2021/12/16: 实现解析器类`Parser`，改变程序翻译的方式，**改变较大**。实现布尔类型`CondIdentToken`，实现工具类`JumpLabelGroup`用于维护跳转列表。在Makefile中加入测试功能。**完成所有功能**，开始Debug：
+- 2021/12/16-17: 实现解析器类`Parser`，改变程序翻译的方式，**改变较大**。实现布尔类型`CondIdentToken`，实现工具类`JumpLabelGroup`用于维护跳转列表。在Makefile中加入测试功能。**完成所有功能，通过了所有功能测试**。修改了几个Bug：
     - 修正了函数参数的Eeyore名。之前会全局使用`p0,p1,p2,p3`等编号，现在对于每个函数都会从0开始计数；
     - 实现短路原则。现在对于`if(a&&b)`，会分开翻译两个条件，当有一个不满足时就直接跳转到末尾；
     - 允许了数组作为函数参数；
@@ -10,7 +10,8 @@
     - 修改了变量数组的初始化方式：
         1. 未赋予初值的数组不再初始化为0；
         2. 为数组声明添加专门的解析方式（在声明字符串前加一个符号@，由Parser解析并生成所有等于0的赋值语句），类里只储存被显式赋值的元素；
-    - 修改了解析器输出声明的方式。原先会把所有变量的声明都输出在程序最前端，现在会根据不同的作用域分别输出到对应函数的最前端；
+    - 修改了解析器输出声明的方式。原先会把所有变量的声明都输出在程序最前端，现在会**根据不同的作用域**分别输出到对应函数的最前端；
+    - 在对常数取否时，显式把取否的值转为整型。即，`!cid->Val()` 改成 `(int)(!cid->Val())` 以匹配常数对应的构造函数。不然，`!cid->Val()` 会被视为一个布尔值，之后匹配整型类的另一个不知道哪个构造函数；
 - 2021/12/14: 实现函数的调用，并实现一部分`Block`。
 - 2021/12/13: 实现函数的声明。
 - 2021/12/7: 实现变量数组的声明，以及常变量数组的访问。
@@ -27,7 +28,7 @@
 - 为作用域添加`is_param`成员的想法来自Zhenbang You；
 
 ## 镜像
-这个仓库托管于课程GitLab上，并[镜像于GitHub](https://github.com/iamwyh2019/compiler-proj)上用来刷马赛克墙。如果代码跟本仓库有100%查重率还请不要误杀。所有commit的提交用户名均为"yuhengwu"，邮箱均为"799810767@qq.com"。
+这个仓库托管于课程GitLab上，并[镜像于GitHub](https://github.com/iamwyh2019/compiler-proj)上用来刷马赛克墙。如果代码跟本仓库有100%查重率请不要误杀。所有commit的提交用户名均为"yuhengwu"，邮箱均为"799810767@qq.com"。
 
 ## 工具类
 `tokenclass.h`和`tokenclass.cpp`中定义了许多工具类用来表达编译中的实体和信息。与Zhenbang You不同，我希望通过类继承来明确区分不同类型的变量，并用私有变量和公有方法来减小程序的耦合程度。目前，它包含以下内容：
@@ -40,8 +41,9 @@
 - `Scope`：作用域，成员变量有一个`map<string, IdentToken*>`储存当前作用域的标识符，有一个指向上层作用域的指针。支持在当前作用域以及所有有效作用域内查找一个标识符，返回对应的类指针；
 - `ArrayOperator`：数组操作器，通过`setTarget`登记要操作的数组。它是数组类的友类，可以访问后者的私有变量。它重载了[]来访问常量数组的内容，返回`int`；重载了()来访问变量数组的内容，返回`IntIdentToken*`。如果这一位没有明确确定，则为`nullptr`。
 - `Parser`：解析器。它会记录所有的声明与语句，解析结束后统一**先**输出声明**再**输出语句。它还会跟踪每条语句的缩进情况。此外，它会维护跳转标签。这里有几个细节：
-    - 语句的缩进情况由Block控制。具体来说，每进入一个Block，缩进就会加一级（多一个\t）；每离开一个Block就会减一级。唯一的例外是函数末尾的return语句会手动加上一级缩进，方法是为`addStmt`里面传入参数`ex_indent=1`。
+    - 语句的缩进情况由Block控制。具体来说，每进入一个Block，缩进就会加一级（多一个\t）；每离开一个Block就会减一级。例外是函数末尾的return语句会手动加上一级缩进，方法是为`addStmt`里面传入参数`ex_indent=1`。
     - 维护作用域当然也是解析器的职责，但是因为在实现解析器类的时候已经有很多直接跟`Scope`交互的代码了，解耦的工作量太大，因此就不把作用域嵌入解析器内了。
+- `JumpLabelGroup`：维护跳转列表组，包括`beginTag, trueTag, falseTag, endTag`，分别代表代码段开头、条件成立的去处、条件不成立的去处、条件成立执行完后的去处（不成立的部分执行完会顺序往下）。
 
 ## 笔记
 ### 2021/11/28
@@ -102,7 +104,44 @@ SomeUnit:   EXP1 EXP2
 ### 2021/12/16
 今天实现了`Parser`类，它会记录所有声明和语句，最后解析时**先**输出声明**再**输出语句。在这之前我们都是实时输出翻译结果，这在处理循环时不可避免地会重复声明变量，因此现在改用解析器统一输出解析结果。
 
-因为现在翻译不是实时的了，所以我们为Makefile加入了test生成规则。它会用目录下的test文件夹（需要自己创建）里的test.in作为输入结果，输出到同一文件夹下的test.out。在命令行内输入`make test`即可使用。
+因为现在翻译不是实时的了，所以我们为Makefile加入了test和selftest生成规则。它会用目录下的test文件夹（需要自己创建）里的test.sy作为输入结果，输出到同一文件夹下的test.ee。在命令行内输入`make selftest`即可使用。`make test`首先会执行selftest的步骤，然后会用test.in作为eeyore的输入，调用MiniVM，输出到test.out中。
+
+为了实现短路原则，在处理逻辑与 `a&&b` 时，不能统一算完两个表达式后再判断，应该按如下方式：
+```
+// compute a
+if a==0 goto falseTag
+// compute b
+if b==0 goto falseTag
+goto trueTag
+```
+此外，为了处理逻辑或，上述代码的`falseTag`不应该直接跳到表达式结尾，而应该跳到下一个逻辑与的表达式的开头；`trueTag`则直接跳到条件成立对应的语句。具体细节可见`Parser`中的`newGroup`对四个tag的处理。总之，对于形如 `if (a&&b || c&&d)` 的语句，应当如下翻译：
+```
+// compute a
+if a==0 goto nextCondTag1
+//compute b
+if b==0 goto nextCondTag1
+goto trueTag
+
+nextCondTag1:
+// compute c
+if c==0 goto nextCondTag2
+// compute d
+if d==0 goto nextCondTag2
+goto trueTag
+
+nextCondTag2:
+goto falseTag
+
+trueTag:
+// the main part of If
+goto endTag
+
+falseTag:
+// the "else" part, or empty if there's no "else"
+
+endTag:
+// after the If
+```
 
 
 ## 附录
