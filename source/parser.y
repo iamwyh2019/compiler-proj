@@ -860,8 +860,6 @@ UnaryExp:   PrimaryExp {$$ = $1;}
             yyerror("Int Identifier required.");
 
         auto cid = (IntIdentToken*)$2;
-        if (cid->Type() != IntType)
-            yyerror("Int identifier required.");
         if (cid->isConst())
             $$ = new IntIdentToken(-cid->Val());
         else {
@@ -878,10 +876,9 @@ UnaryExp:   PrimaryExp {$$ = $1;}
             yyerror("Int Identifier required.");
 
         auto cid = (IntIdentToken*)$2;
-        if (cid->Type() != IntType)
-            yyerror("Int identifier required.");
-        if (cid->isConst())
-            $$ = new IntIdentToken(!cid->Val());
+        if (cid->isConst()) {
+            $$ = new IntIdentToken((int)(!cid->Val()));
+        }
         else {
             auto newcid = new IntIdentToken(); // A temporary var
             parser.addDecl(newcid, nowFunc);
