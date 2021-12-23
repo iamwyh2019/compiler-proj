@@ -104,7 +104,7 @@ SomeUnit:   EXP1 EXP2
 ### 2021/12/16
 今天实现了`Parser`类，它会记录所有声明和语句，最后解析时**先**输出声明**再**输出语句。在这之前我们都是实时输出翻译结果，这在处理循环时不可避免地会重复声明变量，因此现在改用解析器统一输出解析结果。
 
-因为现在翻译不是实时的了，所以我们为Makefile加入了test和selftest生成规则。它会用目录下的test文件夹（需要自己创建）里的test.sy作为输入结果，输出到同一文件夹下的test.ee。在命令行内输入`make selftest`即可使用。`make test`首先会执行selftest的步骤，然后会用test.in作为eeyore的输入，调用MiniVM，输出到test.out中。
+因为现在翻译不是实时的了，所以我们为Makefile加入了test和selftest生成规则。`make selftest` 会用目录下的test文件夹（需要自己创建）里的test.sy作为输入结果，输出到同一文件夹下的test.ee。`make test`首先会执行selftest的步骤，然后用test.in作为eeyore的输入，调用MiniVM，输出到test.out中。
 
 为了实现短路原则，在处理逻辑与 `a&&b` 时，不能统一算完两个表达式后再判断，应该按如下方式：
 ```
