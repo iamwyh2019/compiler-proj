@@ -5,8 +5,8 @@ CPP = g++
 CFLAGS := -Wall -std=c11
 CPPFLAGS := -Wall -Wno-register -std=c++17
 
-# If PROD (production) undefined then it's 0
-PROD ?= 0
+# If PROD (production) undefined then it's 1
+PROD ?= 1
 ifeq ($(PROD), 0)
 CFLAGS += -g -O0
 CPPFLAGS += -g -O0
@@ -20,7 +20,7 @@ LEX = flex
 YACC = bison
 
 # Directories. Copied from the document.
-NOW_DIR = $(shell pwd)
+NOW_DIR = .
 BUILD_DIR ?= $(NOW_DIR)/build
 SOURCE_DIR = $(NOW_DIR)/source
 TARGET_EXEC = compiler
