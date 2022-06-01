@@ -21,15 +21,6 @@
 - 2021/11/28: 配置Makefile并完成基本的词法分析器。
 - 2021/10/24: 创建仓库。
 
-## 学术诚信
-我承诺严格遵守学术诚信。所有来自他人的代码段都会明确标出，其余所有代码都是个人工作。
-- 多行注释的正则表达式来自Zhenbang You。我至今还不会推这个表达式；
-- 将`yylval`定义成`void*`的想法来自Zhenbang You；
-- 为作用域添加`is_param`成员的想法来自Zhenbang You；
-
-## 镜像
-这个仓库托管于课程GitLab上，并[镜像于GitHub](https://github.com/iamwyh2019/compiler-proj)上用来刷马赛克墙。如果代码跟本仓库有100%查重率请不要误杀。所有commit的提交用户名均为"yuhengwu"，邮箱均为"799810767@qq.com"。
-
 ## 工具类
 `tokenclass.h`和`tokenclass.cpp`中定义了许多工具类用来表达编译中的实体和信息。与Zhenbang You不同，我希望通过类继承来明确区分不同类型的变量，并用私有变量和公有方法来减小程序的耦合程度。目前，它包含以下内容：
 - `Token`：代表一切token的父类，成员变量`type`，包括`IntType`, `ArrayType`, `FuncType`, `VoidType`；
@@ -147,8 +138,4 @@ endTag:
 
 ## 附录
 几个链接：
-- 嘉然今天吃什么：https://space.bilibili.com/672328094
-- 向晚大魔王：https://space.bilibili.com/672346917
-- 贝拉kira：https://space.bilibili.com/672353429
-- 乃琳Queen：https://space.bilibili.com/672342685
-- 珈乐Carol：https://space.bilibili.com/351609538
+- 肖斯塔科维奇《第二圆舞曲》: https://www.bilibili.com/video/BV1VF411x7nU
